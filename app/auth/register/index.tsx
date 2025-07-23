@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Link, router } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
@@ -16,6 +17,9 @@ import {
 const RegisterScreen = () => {
   // Referencias para el ScrollView y campos
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Store de autenticación
+  const { register } = useAuthStore();
 
   // Estados locales para el formulario
   const [fullName, setFullName] = useState('');
@@ -118,27 +122,41 @@ const RegisterScreen = () => {
 
     setIsLoading(true);
     try {
-      // TODO: Implementar función de registro en authActions
-      console.log('📝 Datos de registro:', {
+      console.log('📝 Iniciando registro con datos:', {
         fullName: fullName.trim(),
         employeeId: employeeId.trim(),
         email: email.trim().toLowerCase(),
-        password
+        password: '***' // No mostrar contraseña en logs
       });
 
-      // Simular registro exitoso por ahora
-      Alert.alert(
-        'Registro Exitoso',
-        'Su cuenta ha sido creada correctamente. Ahora puede iniciar sesión.',
-        [
-          {
-            text: 'Ir a Login',
-            onPress: () => router.replace('/auth/login')
-          }
-        ]
+      const success = await register(
+        fullName.trim(),
+        employeeId.trim(),
+        email.trim().toLowerCase(),
+        password,
+        confirmPassword
       );
 
+      if (success) {
+        Alert.alert(
+          'Registro Exitoso',
+          'Su cuenta ha sido creada correctamente. Será redirigido automáticamente.',
+          [
+            {
+              text: 'Continuar',
+              onPress: () => router.replace('/(attendances-app)/(home)')
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Error de Registro',
+          'No se pudo crear la cuenta. Verifique los datos e intente nuevamente.'
+        );
+      }
+
     } catch (error) {
+      console.error('Error en handleRegister:', error);
       Alert.alert('Error', 'Ocurrió un error al crear la cuenta');
     } finally {
       setIsLoading(false);
