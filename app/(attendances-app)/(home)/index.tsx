@@ -3,7 +3,8 @@ import { Text, View } from 'react-native'
 
 const homeScreen = () => {
   return (
-    <View>
+    <View 
+    >
       <Text>homeScreen</Text>
     </View>
   )

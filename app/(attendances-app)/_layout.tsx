@@ -1,7 +1,11 @@
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import { Redirect, Stack } from 'expo-router';
+import { Redirect } from 'expo-router';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+
+/* Drawer */
+import { Drawer } from 'expo-router/drawer';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const CheckAuthenticationLayout = () => {
 
@@ -27,8 +31,7 @@ const CheckAuthenticationLayout = () => {
   }
 
   return (
-    <Stack
-    /* Esto es para que se aplique el color de fondo en neustras pantallas */
+/*     <Stack
       screenOptions={{
         headerShadowVisible: false,
         headerStyle: {
@@ -46,7 +49,25 @@ const CheckAuthenticationLayout = () => {
         title: 'Home'
       }}/>
       
-    </Stack>
+    </Stack> */
+    <GestureHandlerRootView style={{ flex: 1}}>
+      <Drawer>
+        <Drawer.Screen
+          name='qrAttendance/index'
+          options={{
+            drawerLabel: 'Asistencia',
+            title: 'Registro'
+          }}
+        />
+        <Drawer.Screen
+        name='index'
+        options={{
+          drawerLabel: 'Home',
+          title: 'Home'
+        }}
+        />
+      </Drawer>
+    </GestureHandlerRootView>
   )
 
 };
