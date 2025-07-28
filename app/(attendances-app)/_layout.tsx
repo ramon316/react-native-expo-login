@@ -60,7 +60,7 @@ const CheckAuthenticationLayout = () => {
           }}
         />
         <Drawer.Screen
-        name='index'
+        name='(home)/index'
         options={{
           drawerLabel: 'Home',
           title: 'Home'
