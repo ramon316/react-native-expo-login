@@ -1,5 +1,6 @@
+import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -84,8 +85,11 @@ const LoginScreen = () => {
       const success = await login(email.trim().toLowerCase(), password);
 
       if (success) {
-        // El redirect se maneja automáticamente por el layout de autenticación
-        router.replace('/(attendances-app)/(home)');
+        // Obtener el usuario del store después del login exitoso
+        const { user } = useAuthStore.getState();
+
+        // Redireccionar basado en el rol del usuario usando el helper
+        redirectBasedOnRole(user);
       } else {
         Alert.alert('Error', 'Email o contraseña incorrectos');
         // Limpiar contraseña en caso de error
@@ -93,6 +97,7 @@ const LoginScreen = () => {
         setErrors(prev => ({ ...prev, password: '' }));
       }
     } catch (error) {
+      console.error('❌ Error en handleLogin:', error);
       Alert.alert('Error', 'Ocurrió un error al iniciar sesión');
     } finally {
       setIsLoading(false);

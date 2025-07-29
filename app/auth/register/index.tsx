@@ -1,5 +1,6 @@
+import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -138,13 +139,22 @@ const RegisterScreen = () => {
       );
 
       if (success) {
+        // Obtener el usuario del store después del registro exitoso
+        const { user } = useAuthStore.getState();
+
+        console.log('👤 Usuario registrado:', user);
+        console.log('🔑 Rol del usuario:', user?.role);
+
         Alert.alert(
           'Registro Exitoso',
           'Su cuenta ha sido creada correctamente. Será redirigido automáticamente.',
           [
             {
               text: 'Continuar',
-              onPress: () => router.replace('/(attendances-app)/(home)')
+              onPress: () => {
+                // Redireccionar basado en el rol del usuario usando el helper
+                redirectBasedOnRole(user);
+              }
             }
           ]
         );

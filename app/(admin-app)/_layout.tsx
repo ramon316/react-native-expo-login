@@ -53,18 +53,18 @@ const CheckAuthenticationLayout = () => {
     <GestureHandlerRootView style={{ flex: 1}}>
       <Drawer>
         <Drawer.Screen
-        name='(home)/index'
+        name='(dashboard)/index'
         options={{
-          drawerLabel: 'Home',
-          title: 'Home'
+          drawerLabel: 'Dashboard',
+          title: 'Dashboard'
         }}
         />
       </Drawer>
         <Drawer.Screen
-          name='qrAttendance/index'
+          name='events/index'
           options={{
-            drawerLabel: 'Asistencia',
-            title: 'Asistencia'
+            drawerLabel: 'Eventos',
+            title: 'Eventos'
           }}
         />
     </GestureHandlerRootView>
