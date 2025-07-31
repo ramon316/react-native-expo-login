@@ -1,4 +1,6 @@
+import { useEventStore } from '@/presentation/event/store/useEventStore';
 import { Ionicons } from '@expo/vector-icons';
+import * as ExpoLocation from 'expo-location';
 import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
@@ -19,6 +21,9 @@ const CreateEventScreen = () => {
   // Referencias para el ScrollView
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Store de eventos
+  const { createNewEvent, loadingStatus } = useEventStore();
+
   // Estados locales para el formulario
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -26,7 +31,8 @@ const CreateEventScreen = () => {
   const [allowedRadius, setAllowedRadius] = useState('50');
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Usar el estado de carga del store
+  const isLoading = loadingStatus === 'loading';
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   // Estados para los modales de fecha/hora
@@ -139,23 +145,44 @@ const CreateEventScreen = () => {
   const getCurrentLocation = async () => {
     setIsGettingLocation(true);
     try {
-      // TODO: Implementar geolocalización
-      console.log('🌍 Obteniendo ubicación actual...');
+      // Solicitar permisos de ubicación
+      const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
 
-      // Simulación temporal - reemplazar con geolocalización real
-      setTimeout(() => {
-        setCoordinates({
-          latitude: 19.4326, // Ciudad de México ejemplo
-          longitude: -99.1332
-        });
+      if (status !== 'granted') {
         setIsGettingLocation(false);
-        Alert.alert('Ubicación obtenida', 'Se ha obtenido la ubicación actual correctamente');
-      }, 2000);
+        Alert.alert(
+          'Permisos requeridos',
+          'Se necesitan permisos de ubicación para crear eventos.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+              text: 'Configuración',
+              onPress: () => ExpoLocation.requestForegroundPermissionsAsync()
+            }
+          ]
+        );
+        return;
+      }
+
+      // Obtener ubicación actual
+      console.log('📍 Obteniendo ubicación actual...');
+      const location = await ExpoLocation.getCurrentPositionAsync({
+        accuracy: ExpoLocation.Accuracy.High,
+        timeInterval: 5000,
+        distanceInterval: 1,
+      });
+
+      const { latitude, longitude } = location.coords;
+      console.log('✅ Ubicación obtenida:', { latitude, longitude });
+
+      setCoordinates({ latitude, longitude });
+      setIsGettingLocation(false);
+      Alert.alert('Ubicación obtenida', 'Se ha obtenido la ubicación actual exitosamente.');
 
     } catch (error) {
       console.error('❌ Error al obtener ubicación:', error);
       setIsGettingLocation(false);
-      Alert.alert('Error', 'No se pudo obtener la ubicación actual');
+      Alert.alert('Error', 'No se pudo obtener la ubicación. Intente nuevamente.');
     }
   };
 
@@ -171,7 +198,6 @@ const CreateEventScreen = () => {
       return;
     }
 
-    setIsLoading(true);
     try {
       // Formatear fechas para la API (formato ISO)
       const formatDateForAPI = (date: Date) => {
@@ -180,10 +206,10 @@ const CreateEventScreen = () => {
 
       const eventData = {
         name: name.trim(),
-        description: description.trim() || null,
+        description: description.trim() || undefined,
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
-        address: address.trim() || null,
+        address: address.trim() || undefined,
         allowed_radius: parseInt(allowedRadius),
         start_time: formatDateForAPI(startTime!),
         end_time: formatDateForAPI(endTime!)
@@ -191,12 +217,10 @@ const CreateEventScreen = () => {
 
       console.log('📝 Creando evento con datos:', eventData);
 
-      // TODO: Implementar llamada a la API
-      // const response = await eventsApi.post('/events', eventData);
+      // Usar el store para crear el evento
+      const newEvent = await createNewEvent(eventData);
 
-      // Simulación temporal
-      setTimeout(() => {
-        setIsLoading(false);
+      if (newEvent) {
         Alert.alert(
           'Evento Creado',
           'El evento ha sido creado exitosamente.',
@@ -207,11 +231,12 @@ const CreateEventScreen = () => {
             }
           ]
         );
-      }, 2000);
+      } else {
+        Alert.alert('Error', 'No se pudo crear el evento. Intente nuevamente.');
+      }
 
     } catch (error) {
       console.error('❌ Error al crear evento:', error);
-      setIsLoading(false);
       Alert.alert('Error', 'No se pudo crear el evento. Intente nuevamente.');
     }
   };
