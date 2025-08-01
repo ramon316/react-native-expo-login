@@ -18,9 +18,15 @@ export const getEvents = async (): Promise<Event[] | null> => {
 
     console.log('📦 Respuesta completa de getEvents:', data);
 
-    // Verificar si la respuesta tiene el formato con success
-    if (data.success && data.data) {
-      console.log('✅ Eventos obtenidos exitosamente (formato con success):', data.data.length);
+    // Verificar si la respuesta tiene el formato con success y events (formato de tu API)
+    if (data.success && data.events && Array.isArray(data.events)) {
+      console.log('✅ Eventos obtenidos exitosamente (formato con events):', data.events.length);
+      return data.events;
+    }
+
+    // Verificar si la respuesta tiene el formato con success y data
+    if (data.success && data.data && Array.isArray(data.data)) {
+      console.log('✅ Eventos obtenidos exitosamente (formato con data):', data.data.length);
       return data.data;
     }
 
@@ -28,12 +34,6 @@ export const getEvents = async (): Promise<Event[] | null> => {
     if (Array.isArray(data)) {
       console.log('✅ Eventos obtenidos exitosamente (formato array directo):', data.length);
       return data;
-    }
-
-    // Verificar si los eventos están en data sin success flag
-    if (data.data && Array.isArray(data.data)) {
-      console.log('✅ Eventos obtenidos exitosamente (formato data):', data.data.length);
-      return data.data;
     }
 
     console.log('❌ Error en la respuesta de eventos - formato no reconocido:', data);
