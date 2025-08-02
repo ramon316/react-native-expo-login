@@ -47,13 +47,7 @@ const EventsIndexScreen = () => {
 
   // Función para navegar a detalles del evento
   const navigateToDetails = (eventId: number) => {
-    // Por ahora, mostrar información del evento en un alert
-    // TODO: Crear pantalla de detalles del evento
-    Alert.alert(
-      'Detalles del Evento',
-      `Funcionalidad de detalles del evento ${eventId} próximamente disponible.`,
-      [{ text: 'OK' }]
-    );
+    router.push(`/(admin-app)/events/${eventId}` as any);
   };
 
   // Función para eliminar evento

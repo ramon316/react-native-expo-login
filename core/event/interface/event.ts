@@ -26,7 +26,7 @@ export interface Event {
     updated_at: string;
   };
   // Campos opcionales adicionales
-  is_active?: boolean;
+  active: boolean; // Tu API retorna "active" no "is_active"
   attendances_count?: number;
 }
 
