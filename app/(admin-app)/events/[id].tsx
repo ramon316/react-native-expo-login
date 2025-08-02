@@ -1,15 +1,16 @@
+import { PrintModal } from '@/components/print/PrintModal';
 import { useEventStore } from '@/presentation/event/store/useEventStore';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 const EventDetailsScreen = () => {
@@ -26,6 +27,7 @@ const EventDetailsScreen = () => {
   } = useEventStore();
 
   const [qrImageUrl, setQrImageUrl] = useState<string>('');
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const isLoading = loadingStatus === 'loading';
 
   // Cargar evento al montar el componente
@@ -61,6 +63,13 @@ const EventDetailsScreen = () => {
   // Función para volver atrás
   const goBack = () => {
     router.push('/events');
+  };
+
+  // Función para abrir el modal de impresión
+  const handlePrint = () => {
+    if (currentEvent) {
+      setShowPrintModal(true);
+    }
   };
 
   // Función para eliminar evento
@@ -208,13 +217,24 @@ const EventDetailsScreen = () => {
               {currentEvent.name}
             </Text>
           </View>
-          
-          <TouchableOpacity
-            onPress={handleDeleteEvent}
-            className="p-2"
-          >
-            <Ionicons name="trash-outline" size={24} color="#ef4444" />
-          </TouchableOpacity>
+
+          <View className="flex-row items-center space-x-2">
+            {/* Botón Imprimir */}
+            <TouchableOpacity
+              onPress={handlePrint}
+              className="p-2"
+            >
+              <Ionicons name="print-outline" size={24} color="#3b82f6" />
+            </TouchableOpacity>
+
+            {/* Botón Eliminar */}
+            <TouchableOpacity
+              onPress={handleDeleteEvent}
+              className="p-2"
+            >
+              <Ionicons name="trash-outline" size={24} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -458,6 +478,13 @@ const EventDetailsScreen = () => {
           <View className="h-6" />
         </View>
       </ScrollView>
+
+      {/* Modal de impresión */}
+      <PrintModal
+        visible={showPrintModal}
+        event={currentEvent}
+        onClose={() => setShowPrintModal(false)}
+      />
     </View>
   );
 };
