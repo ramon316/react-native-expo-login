@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Redirect } from 'expo-router';
 import React, { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
 
 /* Drawer */
 import { Drawer } from 'expo-router/drawer';
@@ -10,11 +10,37 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 const CheckAuthenticationLayout = () => {
 
   /* Verificar el estus de nuestro authentication */
-  const { status, checkAuthStatus} = useAuthStore();
+  const { status, checkAuthStatus, logout, user } = useAuthStore();
 
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  // Función para manejar el logout
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro de que quieres cerrar sesión?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Cerrar Sesión',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              console.log('✅ Logout exitoso');
+            } catch (error) {
+              console.error('❌ Error en logout:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
 
 
   if (status === 'checking') {
@@ -31,35 +57,31 @@ const CheckAuthenticationLayout = () => {
   }
 
   return (
-/*     <Stack
-      screenOptions={{
-        headerShadowVisible: false,
-        headerStyle: {
-          backgroundColor: '#fff',
-        },
-        contentStyle: {
-          backgroundColor: '#fff',
-        },
-      }}
-    >
-      <Stack.Screen 
-      name='(home)/index' 
-      options={{
-        headerShown: false, 
-        title: 'Home'
-      }}/>
-      
-    </Stack> */
     <GestureHandlerRootView style={{ flex: 1}}>
-      <Drawer>
-        <Drawer.Screen
-        name='(dashboard)/index'
-        options={{
-          drawerLabel: 'Dashboard',
-          title: 'Dashboard'
+      <Drawer
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#f8f9fa',
+          },
+          headerTintColor: '#333',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={handleLogout}
+              className="mr-4 bg-red-500 px-3 py-2 rounded-lg flex-row items-center"
+              activeOpacity={0.7}
+            >
+              <Text className="text-white text-sm font-medium mr-1">Salir</Text>
+            </TouchableOpacity>
+          ),
         }}
+      >
+        <Drawer.Screen
+          name='(dashboard)/index'
+          options={{
+            drawerLabel: 'Dashboard',
+            title: 'Dashboard'
+          }}
         />
-      </Drawer>
         <Drawer.Screen
           name='events/index'
           options={{
@@ -67,6 +89,7 @@ const CheckAuthenticationLayout = () => {
             title: 'Eventos'
           }}
         />
+      </Drawer>
     </GestureHandlerRootView>
   )
 
