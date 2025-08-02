@@ -52,17 +52,31 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     },
 
     checkAuthStatus: async () => {
+        console.log('🔍 checkAuthStatus iniciado');
 
-        /* Esto esta deshabilitado ya que lo que deseamos es que siempre que entre
-        verifique el estado de la autenticación */
-        /* Aquí vamos a probar si ya tenemos un usuario */
-       /*  if (get().user) { */
-            /* set({ status: 'authenticated' }); */
-           /*  return;
-        } */
+        // Primero verificar si ya tenemos un token en storage
+        const existingToken = await SecureStorageAdapter.getItem('token');
+        console.log('🔑 Token existente en storage:', !!existingToken);
 
+        if (!existingToken) {
+            console.log('❌ No hay token en storage, usuario no autenticado');
+            set({ status: 'unauthenticated', token: undefined, user: undefined });
+            return;
+        }
+
+        // Si tenemos token, verificar con el servidor
+        console.log('📡 Verificando token con el servidor...');
         const resp = await authCheckStatus();
-        get().changeStatus(resp?.token, resp?.user);
+
+        if (resp?.token && resp?.user) {
+            console.log('✅ Token válido, usuario autenticado');
+            await get().changeStatus(resp.token, resp.user, 'CHECK_STATUS');
+        } else {
+            console.log('❌ Token inválido o expirado, eliminando...');
+            // Solo eliminar si el servidor confirma que el token es inválido
+            set({ status: 'unauthenticated', token: undefined, user: undefined });
+            await SecureStorageAdapter.deleteItem('token');
+        }
     },
 
     login: async (email: string, password: string) => {

@@ -94,9 +94,22 @@ export const authRegister = async (
 
 export const authCheckStatus = async () => {
     try {
+        console.log('📡 Verificando estado de autenticación con el servidor...');
         const { data } = await attendancesApi.get<AuthResponse>('/check-status');
+
+        console.log('✅ Respuesta de check-status:', data);
         return returnUserToken(data);
-    } catch (error) {
+    } catch (error: any) {
+        console.error('❌ Error en authCheckStatus:', error);
+
+        if (error.response?.status === 401) {
+            console.error('🚨 Token expirado o inválido (401)');
+        } else if (error.response?.status === 500) {
+            console.error('🚨 Error del servidor (500)');
+        } else if (error.code === 'NETWORK_ERROR') {
+            console.error('🚨 Error de red - servidor no disponible');
+        }
+
         return null;
     }
 };

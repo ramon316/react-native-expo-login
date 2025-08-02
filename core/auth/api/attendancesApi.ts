@@ -76,12 +76,11 @@ attendancesApi.interceptors.request.use(
 );
 
 // Interceptor de response para logging detallado
-/* attendancesApi.interceptors.response.use(
+attendancesApi.interceptors.response.use(
     (response) => {
         console.log('📥 RESPONSE RECIBIDO:');
         console.log('✅ Status:', response.status);
         console.log('📦 Data:', response.data);
-        console.log('🔧 Headers:', response.headers);
         return response;
     },
     (error) => {
@@ -90,10 +89,12 @@ attendancesApi.interceptors.request.use(
         console.error('📄 Error Data:', error.response?.data);
         console.error('🌐 URL que falló:', error.config?.url);
         console.error('📋 Método:', error.config?.method);
-        console.error('🔧 Config completa:', error.config);
 
         // Mensajes específicos para errores comunes
-        if (error.response?.status === 404) {
+        if (error.response?.status === 401) {
+            console.error('🚨 ERROR 401: No autorizado - Token inválido o expirado');
+            console.error('🔍 El usuario necesita volver a hacer login');
+        } else if (error.response?.status === 404) {
             console.error('🚨 ERROR 404: Ruta no encontrada');
             console.error('🔍 Verifica que la ruta exista en routes/api.php de Laravel');
             console.error('🔍 URL intentada:', `${error.config?.baseURL}${error.config?.url}`);
@@ -110,7 +111,7 @@ attendancesApi.interceptors.request.use(
 
         return Promise.reject(error);
     }
-); */
+);
 
 export { attendancesApi };
 
