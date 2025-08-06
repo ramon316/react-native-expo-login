@@ -89,6 +89,22 @@ const CheckAuthenticationLayout = () => {
             title: 'Eventos'
           }}
         />
+
+        {/* Ocultar rutas que no queremos en el Drawer */}
+        <Drawer.Screen
+          name='events/create'
+          options={{
+            drawerItemStyle: { display: 'none' },
+            title: 'Crear Evento'
+          }}
+        />
+        <Drawer.Screen
+          name='events/[id]'
+          options={{
+            drawerItemStyle: { display: 'none' },
+            title: 'Detalles del Evento'
+          }}
+        />
       </Drawer>
     </GestureHandlerRootView>
   )

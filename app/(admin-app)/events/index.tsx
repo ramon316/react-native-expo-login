@@ -46,9 +46,9 @@ const EventsIndexScreen = () => {
   }; */
 
   // Función para navegar a detalles del evento
-  /* const navigateToDetails = (eventId: number) => {
+  const navigateToDetails = (eventId: number) => {
     router.push(`/(admin-app)/events/${eventId}` as any);
-  }; */
+  };
 
   // Función para eliminar evento
   const handleDeleteEvent = (eventId: number, eventName: string) => {
@@ -113,7 +113,7 @@ const EventsIndexScreen = () => {
     return (
       <TouchableOpacity
         className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100"
-        onPress={() => router.push('/(admin-app)/events/create')}
+        onPress={() => navigateToDetails(event.id)}
         activeOpacity={0.7}
       >
         {/* Header del evento */}
