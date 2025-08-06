@@ -12,6 +12,7 @@ export interface Event {
   end_time: string;   // formato ISO: "2025-07-29T21:32:00.000000Z"
   created_at: string;
   updated_at: string;
+  attendees_count: number,
   // Campos adicionales que retorna tu API
   user_id: number;
   qr_code: string;
@@ -27,7 +28,7 @@ export interface Event {
   };
   // Campos opcionales adicionales
   active: boolean; // Tu API retorna "active" no "is_active"
-  attendances_count?: number;
+  /* attendances_count?: number; */
 }
 
 export interface CreateEventRequest {

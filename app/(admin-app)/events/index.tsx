@@ -41,14 +41,14 @@ const EventsIndexScreen = () => {
   };
 
   // Función para navegar a crear evento
-  const navigateToCreate = () => {
+ /*  const navigateToCreate = () => {
     router.push('/(admin-app)/events/create');
-  };
+  }; */
 
   // Función para navegar a detalles del evento
-  const navigateToDetails = (eventId: number) => {
+  /* const navigateToDetails = (eventId: number) => {
     router.push(`/(admin-app)/events/${eventId}` as any);
-  };
+  }; */
 
   // Función para eliminar evento
   const handleDeleteEvent = (eventId: number, eventName: string) => {
@@ -113,7 +113,7 @@ const EventsIndexScreen = () => {
     return (
       <TouchableOpacity
         className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100"
-        onPress={() => navigateToDetails(event.id)}
+        onPress={() => router.push('/(admin-app)/events/create')}
         activeOpacity={0.7}
       >
         {/* Header del evento */}
@@ -147,6 +147,14 @@ const EventsIndexScreen = () => {
 
         {/* Información del evento */}
         <View className="space-y-2">
+          {/* Asistentes */}
+          <View className="flex-row items-center">
+            <Ionicons name="people-outline" size={16} color="#6b7280" />
+            <Text className="text-sm text-gray-600 ml-2">
+              Asistentes: {event.attendees_count}
+            </Text>
+          </View>
+
           {/* Fechas */}
           <View className="flex-row items-center">
             <Ionicons name="calendar-outline" size={16} color="#6b7280" />
@@ -204,7 +212,7 @@ const EventsIndexScreen = () => {
       </Text>
       <TouchableOpacity
         className="bg-blue-600 px-6 py-3 rounded-lg"
-        onPress={navigateToCreate}
+        onPress={() => router.push('/(admin-app)/events/create')}
       >
         <Text className="text-white font-medium">
           Crear Primer Evento
@@ -250,7 +258,7 @@ const EventsIndexScreen = () => {
 
           <TouchableOpacity
             className="bg-blue-600 px-4 py-2 rounded-lg flex-row items-center"
-            onPress={navigateToCreate}
+            onPress={() => router.push('/(admin-app)/events/create')}
           >
             <Ionicons name="add" size={20} color="white" />
             <Text className="text-white font-medium ml-1">

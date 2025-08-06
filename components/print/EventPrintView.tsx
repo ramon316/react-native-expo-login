@@ -1,41 +1,41 @@
 import { Event } from '@/core/event/interface/event';
 
 interface EventPrintViewProps {
-  event: Event;
+    event: Event;
 }
 
 export const generateEventPrintHTML = ({ event }: EventPrintViewProps): string => {
-  
-  // Función para formatear fechas en español
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
-  // Función para generar la URL del QR
-  const getQRImageUrl = (qrCode: string) => {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrCode)}`;
-  };
+    // Función para formatear fechas en español
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
 
-  // Generar HTML para la vista de impresión
-  const generatePrintHTML = () => {
-    const currentDate = new Date().toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    // Función para generar la URL del QR
+    const getQRImageUrl = (qrCode: string) => {
+        return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrCode)}`;
+    };
 
-    return `
+    // Generar HTML para la vista de impresión
+    const generatePrintHTML = () => {
+        const currentDate = new Date().toLocaleDateString('es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -348,10 +348,10 @@ export const generateEventPrintHTML = ({ event }: EventPrintViewProps): string =
                         <span class="icon">📊</span>
                         Asistencias Registradas
                     </div>
-                    <div class="info-value">${event.attendances_count}</div>
-                </div>
+                <div class="info-value">${event.attendances_count}</div>
+            </div>
                 ` : ''}
-
+            <div class="info-grid">
                 <div class="info-item">
                     <div class="info-label">
                         <span class="icon">📅</span>
@@ -359,6 +359,7 @@ export const generateEventPrintHTML = ({ event }: EventPrintViewProps): string =
                     </div>
                     <div class="info-value">${formatDate(event.created_at)}</div>
                 </div>
+            </div>
             </div>
         </div>
 
@@ -384,7 +385,7 @@ export const generateEventPrintHTML = ({ event }: EventPrintViewProps): string =
 </body>
 </html>
     `;
-  };
+    };
 
-  return generatePrintHTML();
+    return generatePrintHTML();
 };
