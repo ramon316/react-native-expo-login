@@ -13,12 +13,15 @@ import {
 } from 'react-native';
 
 const EventsIndexScreen = () => {
+  // Esta pantalla muestra únicamente eventos ACTIVOS
+  // (start_date <= now && end_date >= now)
+
   // Store de eventos
   const {
     events,
     loadingStatus,
     error,
-    fetchEvents,
+    fetchActiveEvents,
     removeEvent
   } = useEventStore();
 
@@ -31,8 +34,8 @@ const EventsIndexScreen = () => {
   }, []);
 
   const loadEvents = async () => {
-    console.log('📋 Cargando eventos...');
-    await fetchEvents();
+    console.log('📋 Cargando eventos activos...');
+    await fetchActiveEvents();
   };
 
   // Función para refrescar la lista
@@ -205,10 +208,10 @@ const EventsIndexScreen = () => {
     <View className="flex-1 justify-center items-center py-12">
       <Ionicons name="calendar-outline" size={64} color="#d1d5db" />
       <Text className="text-lg font-medium text-gray-500 mt-4 mb-2">
-        No hay eventos creados
+        No hay eventos activos
       </Text>
       <Text className="text-gray-400 text-center mb-6 px-8">
-        Crea tu primer evento para comenzar a gestionar la asistencia
+        No tienes eventos activos en este momento. Los eventos activos son aquellos que están en curso.
       </Text>
       <TouchableOpacity
         className="bg-blue-600 px-6 py-3 rounded-lg"
@@ -248,11 +251,18 @@ const EventsIndexScreen = () => {
       <View className="bg-white border-b border-gray-200 px-4 py-4">
         <View className="flex-row justify-between items-center">
           <View>
-            <Text className="text-2xl font-bold text-gray-900">
-              Eventos
-            </Text>
+            <View className="flex-row items-center">
+              <Text className="text-2xl font-bold text-gray-900">
+                Eventos Activos
+              </Text>
+              <View className="ml-2 bg-green-100 px-2 py-1 rounded-full">
+                <Text className="text-green-800 text-xs font-medium">
+                  EN CURSO
+                </Text>
+              </View>
+            </View>
             <Text className="text-gray-600">
-              {events.length} evento{events.length !== 1 ? 's' : ''} creado{events.length !== 1 ? 's' : ''}
+              {events.length} evento{events.length !== 1 ? 's' : ''} activo{events.length !== 1 ? 's' : ''}
             </Text>
           </View>
 
@@ -275,7 +285,7 @@ const EventsIndexScreen = () => {
           <View className="flex-1 justify-center items-center">
             <ActivityIndicator size="large" color="#3b82f6" />
             <Text className="text-gray-600 mt-4">
-              Cargando eventos...
+              Cargando eventos activos...
             </Text>
           </View>
         ) : isError ? (

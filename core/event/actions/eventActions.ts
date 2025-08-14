@@ -8,13 +8,37 @@ import {
 } from "../interface/event";
 
 /**
- * Obtiene todos los eventos del usuario autenticado
+ * Tipos de filtros para eventos
  */
-export const getEvents = async (): Promise<Event[] | null> => {
-  try {
-    console.log('📋 Obteniendo eventos del usuario...');
+export type EventFilter = 'upcoming' | 'active' | 'past';
 
-    const { data } = await attendancesApi.get('/events');
+/**
+ * Parámetros para obtener eventos
+ */
+export interface GetEventsParams {
+  filter: EventFilter; // Obligatorio: upcoming, active, past
+  limit?: number;      // Opcional: cantidad de eventos a retornar
+}
+
+/**
+ * Obtiene eventos filtrados del usuario autenticado
+ * @param params - Parámetros de filtrado (filter obligatorio, limit opcional)
+ */
+export const getEvents = async (params: GetEventsParams): Promise<Event[] | null> => {
+  try {
+    console.log('📋 Obteniendo eventos del usuario con filtros:', params);
+
+    // Construir parámetros de query
+    const queryParams = new URLSearchParams({
+      filter: params.filter
+    });
+
+    // Agregar limit si está presente
+    if (params.limit) {
+      queryParams.append('limit', params.limit.toString());
+    }
+
+    const { data } = await attendancesApi.get(`/events?${queryParams.toString()}`);
 
     console.log('📦 Respuesta completa de getEvents:', data);
 
@@ -48,6 +72,38 @@ export const getEvents = async (): Promise<Event[] | null> => {
 
     return null;
   }
+};
+
+/**
+ * Obtiene eventos próximos (upcoming)
+ * @param limit - Cantidad opcional de eventos a retornar
+ */
+export const getUpcomingEvents = async (limit?: number): Promise<Event[] | null> => {
+  return getEvents({ filter: 'upcoming', limit });
+};
+
+/**
+ * Obtiene eventos activos (active)
+ * @param limit - Cantidad opcional de eventos a retornar
+ */
+export const getActiveEvents = async (limit?: number): Promise<Event[] | null> => {
+  return getEvents({ filter: 'active', limit });
+};
+
+/**
+ * Obtiene eventos pasados (past)
+ * @param limit - Cantidad opcional de eventos a retornar
+ */
+export const getPastEvents = async (limit?: number): Promise<Event[] | null> => {
+  return getEvents({ filter: 'past', limit });
+};
+
+/**
+ * Obtiene todos los eventos activos (para compatibilidad con código existente)
+ * Esta función mantiene la compatibilidad con el código que ya existe
+ */
+export const getAllEvents = async (): Promise<Event[] | null> => {
+  return getEvents({ filter: 'active' });
 };
 
 /**

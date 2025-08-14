@@ -97,15 +97,15 @@ const CheckAuthenticationLayout = () => {
         <Drawer.Screen
           name='(home)/index'
           options={{
-            drawerLabel: 'Home',
-            title: 'Home'
+            drawerLabel: 'Asistencias',
+            title: 'Asistencias'
           }}
         />
         <Drawer.Screen
           name='qrAttendance/index'
           options={{
-            drawerLabel: 'Asistencia',
-            title: 'Asistencia'
+            drawerLabel: 'Nueva asistencia',
+            title: 'Nueva Asistencia'
           }}
         />
       </Drawer>

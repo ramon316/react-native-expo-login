@@ -1,10 +1,12 @@
 /* Manejo de eventos y información respectiva */
 import {
-    createEvent,
-    deleteEvent,
-    getEventById,
-    getEvents,
-    updateEvent
+  createEvent,
+  deleteEvent,
+  getAllEvents,
+  getEventById,
+  getEvents,
+  updateEvent,
+  type EventFilter
 } from "@/core/event/actions/eventActions";
 import { CreateEventRequest, Event, UpdateEventRequest } from "@/core/event/interface/event";
 /* Zustand */
@@ -22,6 +24,10 @@ export interface EventState {
 
   // Métodos para obtener eventos
   fetchEvents: () => Promise<boolean>;
+  fetchEventsByFilter: (filter: EventFilter, limit?: number) => Promise<boolean>;
+  fetchUpcomingEvents: (limit?: number) => Promise<boolean>;
+  fetchActiveEvents: (limit?: number) => Promise<boolean>;
+  fetchPastEvents: (limit?: number) => Promise<boolean>;
   fetchEventById: (eventId: number) => Promise<boolean>;
 
   // Métodos para crear/actualizar eventos
@@ -55,7 +61,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
     set({ loadingStatus: 'loading', error: undefined });
 
     try {
-      const events = await getEvents();
+      const events = await getAllEvents();
 
       if (events) {
         console.log('✅ Eventos obtenidos exitosamente:', events.length);
@@ -281,5 +287,63 @@ export const useEventStore = create<EventState>()((set, get) => ({
    */
   setLoadingStatus: (status: EventLoadingStatus) => {
     set({ loadingStatus: status });
+  },
+
+  /**
+   * Obtiene eventos por filtro específico
+   */
+  fetchEventsByFilter: async (filter: EventFilter, limit?: number): Promise<boolean> => {
+    console.log(`📋 Obteniendo eventos con filtro: ${filter}, limit: ${limit}`);
+
+    set({ loadingStatus: 'loading', error: undefined });
+
+    try {
+      const events = await getEvents({ filter, limit });
+
+      if (events) {
+        console.log(`✅ Eventos ${filter} obtenidos exitosamente:`, events.length);
+        set({
+          events,
+          loadingStatus: 'success',
+          error: undefined
+        });
+        return true;
+      } else {
+        console.log(`❌ No se pudieron obtener eventos ${filter}`);
+        set({
+          loadingStatus: 'error',
+          error: `No se pudieron obtener los eventos ${filter}`
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error(`❌ Error al obtener eventos ${filter}:`, error);
+      set({
+        loadingStatus: 'error',
+        error: `Error al obtener eventos ${filter}`
+      });
+      return false;
+    }
+  },
+
+  /**
+   * Obtiene eventos próximos
+   */
+  fetchUpcomingEvents: async (limit?: number): Promise<boolean> => {
+    return get().fetchEventsByFilter('upcoming', limit);
+  },
+
+  /**
+   * Obtiene eventos activos
+   */
+  fetchActiveEvents: async (limit?: number): Promise<boolean> => {
+    return get().fetchEventsByFilter('active', limit);
+  },
+
+  /**
+   * Obtiene eventos pasados
+   */
+  fetchPastEvents: async (limit?: number): Promise<boolean> => {
+    return get().fetchEventsByFilter('past', limit);
   },
 }));

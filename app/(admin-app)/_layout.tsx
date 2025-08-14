@@ -78,8 +78,8 @@ const CheckAuthenticationLayout = () => {
         <Drawer.Screen
           name='(dashboard)/index'
           options={{
-            drawerLabel: 'Dashboard',
-            title: 'Dashboard'
+            drawerLabel: 'Inicio',
+            title: 'Inicio'
           }}
         />
         <Drawer.Screen
@@ -89,6 +89,15 @@ const CheckAuthenticationLayout = () => {
             title: 'Eventos'
           }}
         />
+        <Drawer.Screen
+          name='(dashboard)/components/EventTips/index'
+          options={{
+            drawerLabel: 'Consejos',
+            title: 'Consejos'
+          }}
+        />
+
+
 
         {/* Ocultar rutas que no queremos en el Drawer */}
         <Drawer.Screen
