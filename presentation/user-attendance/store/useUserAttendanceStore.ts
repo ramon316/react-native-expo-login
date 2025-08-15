@@ -1,24 +1,24 @@
 /* Store Zustand para manejo de asistencias del usuario */
 
-import { create } from "zustand";
 import {
-  UserAttendance,
-  UserAttendanceLoadingStatus,
-  UserAttendanceStats,
-  UserAttendanceFilters,
-  AttendancesByEvent,
-  AttendancesByDate,
-  GetMyAttendancesParams
-} from "@/core/user-attendance/interface/userAttendance";
-import {
-  getMyAttendances,
-  getMyAttendanceStats,
-  groupAttendancesByEvent,
-  groupAttendancesByDate,
-  filterAttendances,
-  searchAttendancesByEventName,
-  calculateAttendanceStats
+    calculateAttendanceStats,
+    filterAttendances,
+    getMyAttendances,
+    getMyAttendanceStats,
+    groupAttendancesByDate,
+    groupAttendancesByEvent,
+    searchAttendancesByEventName
 } from "@/core/user-attendance/actions/userAttendanceActions";
+import {
+    AttendancesByDate,
+    AttendancesByEvent,
+    GetMyAttendancesParams,
+    UserAttendance,
+    UserAttendanceFilters,
+    UserAttendanceLoadingStatus,
+    UserAttendanceStats
+} from "@/core/user-attendance/interface/userAttendance";
+import { create } from "zustand";
 
 /**
  * Estado del store de asistencias del usuario
@@ -61,6 +61,7 @@ interface UserAttendanceState {
   refreshData: () => Promise<boolean>;
   clearError: () => void;
   setLoadingStatus: (status: UserAttendanceLoadingStatus) => void;
+  diagnoseApi: () => Promise<void>;
 }
 
 /**
@@ -286,5 +287,12 @@ export const useUserAttendanceStore = create<UserAttendanceState>()((set, get) =
    */
   setLoadingStatus: (status: UserAttendanceLoadingStatus) => {
     set({ loadingStatus: status });
+  },
+
+  /**
+   * Ejecuta diagnóstico de la API
+   */
+  diagnoseApi: async (): Promise<void> => {
+    await diagnoseApiConnection();
   }
 }));

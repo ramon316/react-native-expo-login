@@ -2,13 +2,12 @@
 
 import { attendancesApi } from "@/core/auth/api/attendancesApi";
 import {
-  MyAttendancesResponse,
-  UserAttendance,
-  UserAttendanceStats,
-  GetMyAttendancesParams,
-  PaginatedAttendancesResponse,
-  AttendancesByEvent,
-  AttendancesByDate
+    AttendancesByDate,
+    AttendancesByEvent,
+    GetMyAttendancesParams,
+    MyAttendancesResponse,
+    UserAttendance,
+    UserAttendanceStats
 } from "../interface/userAttendance";
 
 /**
@@ -19,6 +18,11 @@ import {
 export const getMyAttendances = async (params?: GetMyAttendancesParams): Promise<UserAttendance[] | null> => {
   try {
     console.log('📋 Obteniendo asistencias del usuario...', params);
+
+    // Verificar token antes de hacer la petición
+    const { SecureStorageAdapter } = await import('@/helpers/adapters/secure-storage.adapter');
+    const token = await SecureStorageAdapter.getItem('token');
+    console.log('🔍 Token verificado en getMyAttendances:', token ? `${token.substring(0, 20)}...` : 'NO ENCONTRADO');
 
     // Construir parámetros de query
     const queryParams = new URLSearchParams();
@@ -86,6 +90,11 @@ export const getMyAttendanceStats = async (): Promise<UserAttendanceStats | null
   try {
     console.log('📊 Obteniendo estadísticas de asistencias del usuario...');
 
+    // Verificar token antes de hacer la petición
+    const { SecureStorageAdapter } = await import('@/helpers/adapters/secure-storage.adapter');
+    const token = await SecureStorageAdapter.getItem('token');
+    console.log('🔍 Token verificado:', token ? `${token.substring(0, 20)}...` : 'NO ENCONTRADO');
+
     const { data } = await attendancesApi.get('/attendances/my/stats');
 
     console.log('📦 Respuesta de estadísticas:', data);
@@ -99,6 +108,19 @@ export const getMyAttendanceStats = async (): Promise<UserAttendanceStats | null
 
   } catch (error: any) {
     console.error('❌ Error al obtener estadísticas:', error);
+
+    // Fallback: calcular estadísticas localmente usando /attendances/my
+    console.log('🔄 Intentando calcular estadísticas localmente como fallback...');
+    try {
+      const attendances = await getMyAttendances();
+      if (attendances && attendances.length > 0) {
+        console.log('✅ Calculando estadísticas localmente con', attendances.length, 'asistencias');
+        return calculateAttendanceStats(attendances);
+      }
+    } catch (fallbackError) {
+      console.error('❌ Error en fallback:', fallbackError);
+    }
+
     return null;
   }
 };
@@ -248,4 +270,39 @@ export const calculateAttendanceStats = (attendances: UserAttendance[]): UserAtt
     average_distance: Math.round(averageDistance * 100) / 100, // Redondear a 2 decimales
     recent_attendances: recent
   };
+};
+
+/**
+ * Función de diagnóstico para verificar la conectividad de la API
+ * @returns Información de diagnóstico
+ */
+export const diagnoseApiConnection = async (): Promise<void> => {
+  console.log('🔍 === DIAGNÓSTICO DE API ===');
+
+  try {
+    // Verificar configuración base
+    console.log('🌐 Base URL:', attendancesApi.defaults.baseURL);
+    console.log('🔑 Headers por defecto:', JSON.stringify(attendancesApi.defaults.headers, null, 2));
+
+    // Probar endpoint que funciona
+    console.log('🧪 Probando /attendances/my...');
+    const myAttendances = await attendancesApi.get('/attendances/my');
+    console.log('✅ /attendances/my - Status:', myAttendances.status);
+
+    // Probar endpoint problemático
+    console.log('🧪 Probando /attendances/my/stats...');
+    const myStats = await attendancesApi.get('/attendances/my/stats');
+    console.log('✅ /attendances/my/stats - Status:', myStats.status);
+
+  } catch (error: any) {
+    console.error('❌ Error en diagnóstico:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      method: error.config?.method,
+      headers: error.config?.headers
+    });
+  }
+
+  console.log('🔍 === FIN DIAGNÓSTICO ===');
 };

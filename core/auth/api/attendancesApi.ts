@@ -44,29 +44,27 @@ const attendancesApi = axios.create({
     }, */
 });
 
-/* Inteerceptores en Axios */
-attendancesApi.interceptors.request.use(  async (config) => {
-    /* Siempre se manda la configuración ya que ella es la que tenemos que hacer los cambios. */
-    /* Verificar si tenemos un token en secure storage */
-    const token = await SecureStorageAdapter.getItem('token');
-
-    if (token) {
-        /* Si tenemos un token, lo agregamos a la petición */
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    /* como no existe no mandamos nada.*/
-    return config;
-});
-
-
-// Interceptor de request para logging detallado
+/* Interceptor de request combinado: Token + Logging */
 attendancesApi.interceptors.request.use(
-    (config) => {
+    async (config) => {
+        /* Verificar si tenemos un token en secure storage */
+        const token = await SecureStorageAdapter.getItem('token');
+
+        if (token) {
+            /* Si tenemos un token, lo agregamos a la petición */
+            config.headers.Authorization = `Bearer ${token}`;
+            console.log('🔑 Token agregado a la petición');
+        } else {
+            console.warn('⚠️ No se encontró token en SecureStorage');
+        }
+
+        /* Logging detallado de la petición */
         console.log('📤 REQUEST ENVIADO:');
         console.log('🎯 URL completa:', `${config.baseURL}${config.url}`);
         console.log('📋 Método:', config.method?.toUpperCase());
         console.log('📦 Data:', config.data);
-        console.log('🔧 Headers:', config.headers);
+        console.log('🔧 Headers:', JSON.stringify(config.headers, null, 2));
+
         return config;
     },
     (error) => {
