@@ -1,13 +1,12 @@
 import { attendancesApi } from "../api/attendancesApi";
-import { User } from "../interface/user";
+import { AuthResponse, User } from "../interface/user";
 
-export interface AuthResponse {
-    success: boolean;
-    user:    User;
-    token:   string;
-}
+const returnUserToken = (data: AuthResponse): { user: User; token: string } | null => {
+    if (!data.user || !data.token) {
+        console.error('❌ Respuesta de autenticación incompleta:', data);
+        return null;
+    }
 
-const returnUserToken = (data: AuthResponse):{ user: User; token: string } => {
     return {
         user: data.user,
         token: data.token,
@@ -16,14 +15,21 @@ const returnUserToken = (data: AuthResponse):{ user: User; token: string } => {
 
 export const authLogin = async (email: string, password: string) => {
     email = email.toLowerCase();
-    
+
     console.log(`AuthLogin recibe, ${email} and password ${password}`);
 
     try {
         const { data } = await attendancesApi.post<AuthResponse>('/login', {
             email, password
         });
-        return returnUserToken(data);
+
+        const result = returnUserToken(data);
+        if (!result) {
+            console.error('❌ Error al procesar respuesta de login');
+            return null;
+        }
+
+        return result;
     } catch (error: any) {
         console.log('❌ Error completo en authLogin:', error);
         console.log('📡 Error message:', error.message);
@@ -72,7 +78,14 @@ export const authRegister = async (
         });
 
         console.log(`AuthRegister response:`, JSON.stringify(data));
-        return returnUserToken(data);
+
+        const result = returnUserToken(data);
+        if (!result) {
+            console.error('❌ Error al procesar respuesta de registro');
+            return null;
+        }
+
+        return result;
     } catch (error: any) {
         console.log('❌ Error completo en authRegister:', error);
         console.log('📡 Error message:', error.message);
@@ -98,7 +111,14 @@ export const authCheckStatus = async () => {
         const { data } = await attendancesApi.get<AuthResponse>('/check-status');
 
         console.log('✅ Respuesta de check-status:', data);
-        return returnUserToken(data);
+
+        const result = returnUserToken(data);
+        if (!result) {
+            console.error('❌ Error al procesar respuesta de check-status');
+            return null;
+        }
+
+        return result;
     } catch (error: any) {
         console.error('❌ Error en authCheckStatus:', error);
 

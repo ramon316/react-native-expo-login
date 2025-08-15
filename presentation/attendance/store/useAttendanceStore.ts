@@ -1,18 +1,18 @@
 /* Store Zustand para manejo de asistencias */
 
 import {
-    getAttendanceHistory,
-    getAttendanceStats,
-    submitAttendance
+  getAttendanceHistory,
+  getAttendanceStats,
+  submitAttendance
 } from "@/core/attendance/actions/attendanceActions";
 import {
-    Attendance,
-    AttendanceError,
-    AttendanceHistory,
-    AttendanceRequest,
-    AttendanceStats,
-    AttendanceStatus,
-    UserLocation
+  Attendance,
+  AttendanceError,
+  AttendanceHistory,
+  AttendanceRequest,
+  AttendanceStats,
+  AttendanceStatus,
+  UserLocation
 } from "@/core/attendance/interface/attendance";
 import { LocationService } from "@/core/attendance/services/locationService";
 import { create } from "zustand";
@@ -187,7 +187,7 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
             message: 'Se requiere ubicación para registrar asistencia'
           }
         });
-        return false;
+        return null;
       }
 
       console.log('📝 Enviando registro de asistencia...');
@@ -226,14 +226,67 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
         });
         return null;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error inesperado al registrar asistencia:', error);
-      set({ 
+
+      // Extraer mensaje específico del error de la API
+      let errorMessage = 'Error inesperado al registrar asistencia';
+      let errorType: AttendanceError['type'] = 'network';
+
+      if (error.response?.data) {
+        const apiError = error.response.data;
+
+        // Manejar errores específicos de la API
+        if (error.response.status === 422) {
+          // Error de validación
+          if (apiError.message) {
+            errorMessage = apiError.message;
+          } else if (apiError.errors) {
+            // Construir mensaje de errores de validación
+            const validationErrors = Object.values(apiError.errors).flat();
+            errorMessage = validationErrors.join('. ');
+          }
+          errorType = 'validation';
+        } else if (error.response.status === 404) {
+          errorMessage = 'El código QR no es válido o el evento no existe';
+          errorType = 'invalid_qr';
+        } else if (error.response.status === 409) {
+          errorMessage = 'Ya tienes registrada tu asistencia para este evento';
+          errorType = 'already_registered';
+        } else if (error.response.status === 403) {
+          errorMessage = 'No tienes permisos para registrar asistencia en este evento';
+          errorType = 'forbidden';
+        } else if (error.response.status === 400) {
+          // Errores específicos del negocio
+          if (apiError.message?.includes('fuera del rango')) {
+            errorMessage = 'Te encuentras fuera del área permitida para registrar asistencia. Acércate más al lugar del evento.';
+            errorType = 'out_of_range';
+          } else if (apiError.message?.includes('evento no activo') || apiError.message?.includes('evento ha finalizado')) {
+            errorMessage = 'Este evento no está activo o ya ha finalizado';
+            errorType = 'event_inactive';
+          } else if (apiError.message?.includes('evento no ha comenzado')) {
+            errorMessage = 'Este evento aún no ha comenzado. Espera a la hora de inicio.';
+            errorType = 'event_not_started';
+          } else {
+            errorMessage = apiError.message || errorMessage;
+          }
+        } else if (apiError.message) {
+          errorMessage = apiError.message;
+        }
+      } else if (error.code === 'NETWORK_ERROR') {
+        errorMessage = 'No se puede conectar al servidor. Verifica tu conexión a internet.';
+        errorType = 'network';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+        errorType = 'unauthorized';
+      }
+
+      set({
         isSubmittingAttendance: false,
         status: 'error',
         error: {
-          type: 'network',
-          message: 'Error inesperado al registrar asistencia',
+          type: errorType,
+          message: errorMessage,
           details: error
         }
       });

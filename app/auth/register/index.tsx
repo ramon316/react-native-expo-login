@@ -1,5 +1,6 @@
 import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
@@ -23,16 +24,18 @@ const RegisterScreen = () => {
   const { register } = useAuthStore();
 
   // Estados locales para el formulario
-  const [fullName, setFullName] = useState('');
+  const [name, setName] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Estados para errores de validación
   const [errors, setErrors] = useState({
-    fullName: '',
+    name: '',
     employeeId: '',
     email: '',
     password: '',
@@ -82,7 +85,7 @@ const RegisterScreen = () => {
   const validateField = (field: string, value: string) => {
     let error = '';
     switch (field) {
-      case 'fullName':
+      case 'name':
         error = validateFullName(value);
         break;
       case 'employeeId':
@@ -105,13 +108,13 @@ const RegisterScreen = () => {
 
   // Validar todo el formulario
   const validateForm = () => {
-    const fullNameValid = validateField('fullName', fullName);
+    const nameValid = validateField('name', name);
     const employeeIdValid = validateField('employeeId', employeeId);
     const emailValid = validateField('email', email);
     const passwordValid = validateField('password', password);
     const confirmPasswordValid = validateField('confirmPassword', confirmPassword);
 
-    return fullNameValid && employeeIdValid && emailValid && passwordValid && confirmPasswordValid;
+    return nameValid && employeeIdValid && emailValid && passwordValid && confirmPasswordValid;
   };
 
   // Función para manejar el registro
@@ -124,14 +127,14 @@ const RegisterScreen = () => {
     setIsLoading(true);
     try {
       console.log('📝 Iniciando registro con datos:', {
-        fullName: fullName.trim(),
+        name: name.trim(),
         employeeId: employeeId.trim(),
         email: email.trim().toLowerCase(),
         password: '***' // No mostrar contraseña en logs
       });
 
       const success = await register(
-        fullName.trim(),
+        name.trim(),
         employeeId.trim(),
         email.trim().toLowerCase(),
         password,
@@ -175,7 +178,7 @@ const RegisterScreen = () => {
 
   // Verificar si el formulario es válido
   const isFormValid = () => {
-    return fullName.trim() &&
+    return name.trim() &&
            employeeId.trim() &&
            email.trim() &&
            password &&
@@ -223,22 +226,22 @@ const RegisterScreen = () => {
             </Text>
             <TextInput
               className={`px-4 py-4 border rounded-lg text-base ${
-                errors.fullName ? 'border-red-500' : 'border-gray-200'
+                errors.name ? 'border-red-500' : 'border-gray-200'
               }`}
               placeholder="Ingrese su nombre completo"
               placeholderTextColor="#9CA3AF"
-              value={fullName}
+              value={name}
               onChangeText={(text) => {
-                setFullName(text);
-                if (errors.fullName) validateField('fullName', text);
+                setName(text);
+                if (errors.name) validateField('name', text);
               }}
-              onBlur={() => validateField('fullName', fullName)}
+              onBlur={() => validateField('name', name)}
               autoCorrect={false}
               autoCapitalize='words'
               editable={!isLoading}
             />
-            {errors.fullName ? (
-              <Text className="text-red-500 text-xs mt-1">{errors.fullName}</Text>
+            {errors.name ? (
+              <Text className="text-red-500 text-xs mt-1">{errors.name}</Text>
             ) : null}
           </View>
 
@@ -300,27 +303,40 @@ const RegisterScreen = () => {
             <Text className="text-gray-700 text-sm font-medium mb-2">
               Contraseña
             </Text>
-            <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.password ? 'border-red-500' : 'border-gray-200'
-              }`}
-              placeholder="Ingrese su contraseña"
-              placeholderTextColor="#9CA3AF"
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (errors.password) validateField('password', text);
-                // Re-validar confirmPassword si ya tiene valor
-                if (confirmPassword && errors.confirmPassword) {
-                  validateField('confirmPassword', confirmPassword);
-                }
-              }}
-              onBlur={() => validateField('password', password)}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
+            <View className="relative">
+              <TextInput
+                className={`px-4 py-4 pr-12 border rounded-lg text-base ${
+                  errors.password ? 'border-red-500' : 'border-gray-200'
+                }`}
+                placeholder="Ingrese su contraseña"
+                placeholderTextColor="#9CA3AF"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (errors.password) validateField('password', text);
+                  // Re-validar confirmPassword si ya tiene valor
+                  if (confirmPassword && errors.confirmPassword) {
+                    validateField('confirmPassword', confirmPassword);
+                  }
+                }}
+                onBlur={() => validateField('password', password)}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                className="absolute right-3 top-4"
+                onPress={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="#6B7280"
+                />
+              </TouchableOpacity>
+            </View>
             {errors.password ? (
               <Text className="text-red-500 text-xs mt-1">{errors.password}</Text>
             ) : null}
@@ -331,23 +347,36 @@ const RegisterScreen = () => {
             <Text className="text-gray-700 text-sm font-medium mb-2">
               Confirmar contraseña
             </Text>
-            <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.confirmPassword ? 'border-red-500' : 'border-gray-200'
-              }`}
-              placeholder="Confirme su contraseña"
-              placeholderTextColor="#9CA3AF"
-              value={confirmPassword}
-              onChangeText={(text) => {
-                setConfirmPassword(text);
-                if (errors.confirmPassword) validateField('confirmPassword', text);
-              }}
-              onBlur={() => validateField('confirmPassword', confirmPassword)}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
+            <View className="relative">
+              <TextInput
+                className={`px-4 py-4 pr-12 border rounded-lg text-base ${
+                  errors.confirmPassword ? 'border-red-500' : 'border-gray-200'
+                }`}
+                placeholder="Confirme su contraseña"
+                placeholderTextColor="#9CA3AF"
+                value={confirmPassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  if (errors.confirmPassword) validateField('confirmPassword', text);
+                }}
+                onBlur={() => validateField('confirmPassword', confirmPassword)}
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                className="absolute right-3 top-4"
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                disabled={isLoading}
+              >
+                <Ionicons
+                  name={showConfirmPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="#6B7280"
+                />
+              </TouchableOpacity>
+            </View>
             {errors.confirmPassword ? (
               <Text className="text-red-500 text-xs mt-1">{errors.confirmPassword}</Text>
             ) : null}

@@ -1,7 +1,7 @@
 /* Interfaces para el manejo de asistencias */
 
-import { Event } from "@/core/event/interface/event";
 import { User } from "@/core/auth/interface/user";
+import { Event } from "@/core/event/interface/event";
 
 /**
  * Datos requeridos para registrar asistencia
@@ -57,7 +57,7 @@ export type AttendanceStatus =
  * Errores específicos del sistema de asistencias
  */
 export interface AttendanceError {
-  type: 'location' | 'qr' | 'network' | 'validation' | 'permission';
+  type: 'location' | 'qr' | 'network' | 'validation' | 'permission' | 'invalid_qr' | 'already_registered' | 'forbidden' | 'out_of_range' | 'event_inactive' | 'event_not_started' | 'unauthorized';
   message: string;
   details?: any;
 }

@@ -181,26 +181,88 @@ const QRAttendanceScreen = () => {
           ]
         );
       } else {
-        // Mostrar error específico si está disponible
+        // Mostrar error específico según el tipo
         const errorMessage = error?.message || 'No se pudo registrar la asistencia. Intenta nuevamente.';
-
-        Alert.alert(
-          '❌ Error al Registrar',
-          errorMessage,
-          [
-            {
-              text: 'Reintentar',
-              onPress: () => setScanned(false)
-            },
-            {
-              text: 'Cancelar',
-              onPress: () => {
-                setScanned(false);
-                resetAttendanceFlow();
-              }
+        let alertTitle = '❌ Error al Registrar';
+        let alertButtons = [
+          {
+            text: 'Reintentar',
+            onPress: () => setScanned(false)
+          },
+          {
+            text: 'Cancelar',
+            onPress: () => {
+              setScanned(false);
+              resetAttendanceFlow();
             }
-          ]
-        );
+          }
+        ];
+
+        // Personalizar título y botones según el tipo de error
+        switch (error?.type) {
+          case 'already_registered':
+            alertTitle = '✅ Ya Registrado';
+            alertButtons = [
+              {
+                text: 'Entendido',
+                onPress: () => {
+                  setScanned(false);
+                  resetAttendanceFlow();
+                }
+              }
+            ];
+            break;
+          case 'out_of_range':
+            alertTitle = '📍 Fuera del Área';
+            alertButtons = [
+              {
+                text: 'Acercarme',
+                onPress: () => setScanned(false)
+              },
+              {
+                text: 'Cancelar',
+                onPress: () => {
+                  setScanned(false);
+                  resetAttendanceFlow();
+                }
+              }
+            ];
+            break;
+          case 'event_inactive':
+          case 'event_not_started':
+            alertTitle = '⏰ Evento No Disponible';
+            alertButtons = [
+              {
+                text: 'Entendido',
+                onPress: () => {
+                  setScanned(false);
+                  resetAttendanceFlow();
+                }
+              }
+            ];
+            break;
+          case 'invalid_qr':
+            alertTitle = '🔍 Código QR Inválido';
+            break;
+          case 'unauthorized':
+            alertTitle = '🔐 Sesión Expirada';
+            alertButtons = [
+              {
+                text: 'Iniciar Sesión',
+                onPress: () => {
+                  // Aquí podrías redirigir al login
+                  setScanned(false);
+                  resetAttendanceFlow();
+                }
+              }
+            ];
+            break;
+          case 'network':
+            alertTitle = '🌐 Error de Conexión';
+            break;
+        }
+
+        Alert.alert(alertTitle, errorMessage, alertButtons);
       }
     } catch (error) {
       console.error('❌ Error inesperado al registrar asistencia:', error);
@@ -295,11 +357,55 @@ const QRAttendanceScreen = () => {
 
         {/* Mostrar errores */}
         {error && (
-          <View style={styles.errorIndicator}>
-            <Ionicons name="warning" size={16} color="#EF4444" />
-            <Text style={styles.errorText}>{error.message}</Text>
+          <View style={[
+            styles.errorIndicator,
+            error.type === 'already_registered' && styles.successIndicator,
+            error.type === 'out_of_range' && styles.warningIndicator,
+            (error.type === 'event_inactive' || error.type === 'event_not_started') && styles.warningIndicator
+          ]}>
+            <Ionicons
+              name={
+                error.type === 'already_registered' ? 'checkmark-circle' :
+                error.type === 'out_of_range' ? 'location' :
+                error.type === 'event_inactive' || error.type === 'event_not_started' ? 'time' :
+                error.type === 'invalid_qr' ? 'qr-code' :
+                error.type === 'network' ? 'wifi' :
+                'warning'
+              }
+              size={16}
+              color={
+                error.type === 'already_registered' ? '#10B981' :
+                error.type === 'out_of_range' ? '#F59E0B' :
+                error.type === 'event_inactive' || error.type === 'event_not_started' ? '#F59E0B' :
+                '#EF4444'
+              }
+            />
+            <View style={styles.errorTextContainer}>
+              <Text style={[
+                styles.errorTitle,
+                error.type === 'already_registered' && styles.successTitle,
+                error.type === 'out_of_range' && styles.warningTitle,
+                (error.type === 'event_inactive' || error.type === 'event_not_started') && styles.warningTitle
+              ]}>
+                {error.type === 'already_registered' ? 'Ya Registrado' :
+                 error.type === 'out_of_range' ? 'Fuera del Área' :
+                 error.type === 'event_inactive' ? 'Evento No Activo' :
+                 error.type === 'event_not_started' ? 'Evento No Iniciado' :
+                 error.type === 'invalid_qr' ? 'QR Inválido' :
+                 error.type === 'network' ? 'Sin Conexión' :
+                 'Error'}
+              </Text>
+              <Text style={[
+                styles.errorText,
+                error.type === 'already_registered' && styles.successText,
+                error.type === 'out_of_range' && styles.warningText,
+                (error.type === 'event_inactive' || error.type === 'event_not_started') && styles.warningText
+              ]}>
+                {error.message}
+              </Text>
+            </View>
             <TouchableOpacity onPress={clearError} style={styles.clearErrorButton}>
-              <Text style={styles.clearErrorText}>Cerrar</Text>
+              <Ionicons name="close" size={16} color="#6B7280" />
             </TouchableOpacity>
           </View>
         )}
@@ -596,6 +702,37 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontSize: 12,
     fontWeight: '600',
+  },
+  // Estilos para diferentes tipos de errores
+  successIndicator: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+  },
+  warningIndicator: {
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  errorTextContainer: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  errorTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#EF4444',
+    marginBottom: 2,
+  },
+  successTitle: {
+    color: '#10B981',
+  },
+  warningTitle: {
+    color: '#F59E0B',
+  },
+  successText: {
+    color: '#059669',
+  },
+  warningText: {
+    color: '#D97706',
   },
   // Estilos para controles del footer
   footerControls: {

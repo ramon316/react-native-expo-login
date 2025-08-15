@@ -1,6 +1,6 @@
 /* Manejo de nuestro usuario e información respectiva */
 import { authCheckStatus, authLogin, authRegister } from "@/core/auth/actions/authActions";
-import { User } from "@/core/auth/interface/user";
+import { isUserActive, User } from "@/core/auth/interface/user";
 import { SecureStorageAdapter } from "@/helpers/adapters/secure-storage.adapter";
 /* Zuztand */
 import { create } from "zustand";
@@ -25,6 +25,19 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     status: 'checking',
     token: undefined,
     user: undefined,
+
+    /* Helper function para adaptar usuario */
+    adaptUser: (user: User): User => {
+        // Agregar campos de compatibilidad
+        return {
+            ...user,
+            // Campos calculados para compatibilidad
+            fullName: user.name,
+            isActive: isUserActive(user),
+            roles: [user.role]
+        } as User;
+    },
+
     /* Methods  o actions in Zuztand */
     changeStatus: async (token?:string, user?:User, origin?: string) =>{
         console.log(`🔄 changeStatus llamado desde ${origin || 'UNKNOWN'} con:`, { token: !!token, user: !!user });
@@ -41,10 +54,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
         console.log(`✅ changeStatus (${origin}): Autenticación exitosa`);
         /* Si tenemos respuesta, si se autentico */
+
+        // Adaptar usuario para compatibilidad
+        const adaptedUser = get().adaptUser(user);
+
         set({
             status: 'authenticated',
             token: token,
-            user: user
+            user: adaptedUser
         });
         //TODO: guardar token en storage
         await SecureStorageAdapter.setItem('token', token);

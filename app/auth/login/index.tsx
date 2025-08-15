@@ -1,5 +1,6 @@
 import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -23,6 +24,7 @@ const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Estados para errores de validación
   const [errors, setErrors] = useState({
@@ -176,23 +178,36 @@ const LoginScreen = () => {
             <Text className="text-gray-700 text-sm font-medium mb-2">
               Contraseña
             </Text>
-            <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.password ? 'border-red-500' : 'border-gray-200'
-              }`}
-              placeholder="Ingrese su contraseña"
-              placeholderTextColor="#9CA3AF"
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (errors.password) validateField('password', text);
-              }}
-              onBlur={() => validateField('password', password)}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
+            <View className="relative">
+              <TextInput
+                className={`px-4 py-4 pr-12 border rounded-lg text-base ${
+                  errors.password ? 'border-red-500' : 'border-gray-200'
+                }`}
+                placeholder="Ingrese su contraseña"
+                placeholderTextColor="#9CA3AF"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (errors.password) validateField('password', text);
+                }}
+                onBlur={() => validateField('password', password)}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                className="absolute right-3 top-4"
+                onPress={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="#6B7280"
+                />
+              </TouchableOpacity>
+            </View>
             {errors.password ? (
               <Text className="text-red-500 text-xs mt-1">{errors.password}</Text>
             ) : null}
