@@ -134,4 +134,51 @@ export const authCheckStatus = async () => {
     }
 };
 
+/**
+ * Valida si una matrícula existe en el sistema
+ * @param matricula - Matrícula a validar
+ * @returns true si existe, false si no existe
+ */
+export const validateMatricula = async (matricula: string): Promise<boolean | null> => {
+    try {
+        console.log('🔍 Validando matrícula:', matricula);
+
+        const { data } = await attendancesApi.post('/validate-matricula', {
+            matricula: matricula.trim()
+        });
+
+        console.log('📦 Respuesta de validación de matrícula:', data);
+
+        // Asumiendo que la API retorna { success: boolean, exists: boolean }
+        if (data.success !== undefined) {
+            return data.success;
+        }
+
+        // Si la respuesta tiene un campo 'exists'
+        if (data.exists !== undefined) {
+            return data.exists;
+        }
+
+        // Si la respuesta es directamente un boolean
+        if (typeof data === 'boolean') {
+            return data;
+        }
+
+        console.warn('⚠️ Formato de respuesta inesperado:', data);
+        return null;
+
+    } catch (error: any) {
+        console.error('❌ Error al validar matrícula:', error);
+        console.log('🔢 Error status:', error.response?.status);
+        console.log('📄 Error data:', error.response?.data);
+
+        if (error.response?.status === 404) {
+            // Si el endpoint retorna 404, la matrícula no existe
+            return false;
+        }
+
+        return null;
+    }
+};
+
 //TODO Tarea: hacer el register

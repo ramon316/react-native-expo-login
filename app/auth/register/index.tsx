@@ -1,3 +1,4 @@
+import { validateMatricula } from '@/core/auth/actions/authActions';
 import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +33,11 @@ const RegisterScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Estados para validación de matrícula
+  const [isValidatingMatricula, setIsValidatingMatricula] = useState(false);
+  const [matriculaValidated, setMatriculaValidated] = useState<boolean | null>(null);
+  const [showMatriculaConfirmation, setShowMatriculaConfirmation] = useState(false);
 
   // Estados para errores de validación
   const [errors, setErrors] = useState({
@@ -124,13 +130,27 @@ const RegisterScreen = () => {
       return;
     }
 
+    // Validar matrícula antes del registro si no está validada
+    if (matriculaValidated === null) {
+      console.log('🔍 Validando matrícula antes del registro...');
+      await handleValidateMatricula(employeeId);
+      return; // Esperar a que se complete la validación
+    }
+
+    // Si la matrícula no fue encontrada, mostrar confirmación
+    if (matriculaValidated === false && !showMatriculaConfirmation) {
+      setShowMatriculaConfirmation(true);
+      return;
+    }
+
     setIsLoading(true);
     try {
       console.log('📝 Iniciando registro con datos:', {
         name: name.trim(),
         employeeId: employeeId.trim(),
         email: email.trim().toLowerCase(),
-        password: '***' // No mostrar contraseña en logs
+        password: '***', // No mostrar contraseña en logs
+        matriculaValidated: matriculaValidated
       });
 
       const success = await register(
@@ -138,7 +158,8 @@ const RegisterScreen = () => {
         employeeId.trim(),
         email.trim().toLowerCase(),
         password,
-        confirmPassword
+        confirmPassword,
+        matriculaValidated || false // Pasar el estado de validación de matrícula
       );
 
       if (success) {
@@ -148,9 +169,19 @@ const RegisterScreen = () => {
         console.log('👤 Usuario registrado:', user);
         console.log('🔑 Rol del usuario:', user?.role);
 
+        // Mensaje personalizado según el estado de la matrícula
+        const title = '✅ Cuenta Creada';
+        let message = '';
+
+        if (matriculaValidated === false) {
+          message = 'Tu cuenta ha sido creada pero quedará pendiente de verificación manual debido a que tu matrícula no fue encontrada en nuestros registros. Te notificaremos cuando sea verificada.';
+        } else {
+          message = 'Tu cuenta ha sido creada exitosamente. Serás redirigido al dashboard.';
+        }
+
         Alert.alert(
-          'Registro Exitoso',
-          'Su cuenta ha sido creada correctamente. Será redirigido automáticamente.',
+          title,
+          message,
           [
             {
               text: 'Continuar',
@@ -176,6 +207,65 @@ const RegisterScreen = () => {
     }
   };
 
+  // Función para validar matrícula
+  const handleValidateMatricula = async (matricula: string) => {
+    if (!matricula.trim()) return;
+
+    setIsValidatingMatricula(true);
+    try {
+      const isValid = await validateMatricula(matricula);
+      console.log('🔍 Resultado de validación de matrícula:', isValid);
+
+      if (isValid === null) {
+        // Error en la validación
+        Alert.alert(
+          '❌ Error de Conexión',
+          'No se pudo validar la matrícula. Verifica tu conexión e intenta nuevamente.',
+          [{ text: 'Entendido' }]
+        );
+        setMatriculaValidated(null);
+      } else if (isValid === false) {
+        // Matrícula no encontrada
+        setMatriculaValidated(false);
+        setShowMatriculaConfirmation(true);
+      } else {
+        // Matrícula válida
+        setMatriculaValidated(true);
+        setShowMatriculaConfirmation(false);
+      }
+    } catch (error) {
+      console.error('❌ Error al validar matrícula:', error);
+      Alert.alert(
+        '❌ Error',
+        'Ocurrió un error al validar la matrícula. Intenta nuevamente.',
+        [{ text: 'Entendido' }]
+      );
+      setMatriculaValidated(null);
+    } finally {
+      setIsValidatingMatricula(false);
+    }
+  };
+
+  // Función para manejar la confirmación de matrícula no encontrada
+  const handleMatriculaConfirmation = (isCorrect: boolean) => {
+    if (isCorrect) {
+      // El usuario confirma que la matrícula es correcta
+      setMatriculaValidated(true);
+      setShowMatriculaConfirmation(false);
+      console.log('✅ Usuario confirmó que la matrícula es correcta');
+    } else {
+      // El usuario dice que la matrícula es incorrecta
+      setMatriculaValidated(null);
+      setShowMatriculaConfirmation(false);
+      // Enfocar el campo de matrícula para corrección
+      Alert.alert(
+        '📝 Corregir Matrícula',
+        'Por favor, corrige tu matrícula y vuelve a validarla.',
+        [{ text: 'Entendido' }]
+      );
+    }
+  };
+
   // Verificar si el formulario es válido
   const isFormValid = () => {
     return name.trim() &&
@@ -183,6 +273,7 @@ const RegisterScreen = () => {
            email.trim() &&
            password &&
            confirmPassword &&
+           matriculaValidated === true && // Matrícula debe estar validada
            Object.values(errors).every(error => error === '');
   };
 
@@ -250,24 +341,55 @@ const RegisterScreen = () => {
             <Text className="text-gray-700 text-sm font-medium mb-2">
               Matrícula
             </Text>
-            <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.employeeId ? 'border-red-500' : 'border-gray-200'
-              }`}
-              placeholder="Ingrese su matrícula"
-              placeholderTextColor="#9CA3AF"
-              value={employeeId}
-              onChangeText={(text) => {
-                setEmployeeId(text);
-                if (errors.employeeId) validateField('employeeId', text);
-              }}
-              onBlur={() => validateField('employeeId', employeeId)}
-              autoCorrect={false}
-              autoCapitalize="none"
-              editable={!isLoading}
-            />
+            <View className="relative">
+              <TextInput
+                className={`px-4 py-4 pr-12 border rounded-lg text-base ${
+                  errors.employeeId ? 'border-red-500' :
+                  matriculaValidated === true ? 'border-green-500' :
+                  matriculaValidated === false ? 'border-orange-500' :
+                  'border-gray-200'
+                }`}
+                placeholder="Ingrese su matrícula"
+                placeholderTextColor="#9CA3AF"
+                value={employeeId}
+                onChangeText={(text) => {
+                  setEmployeeId(text);
+                  // Resetear validación cuando cambia el texto
+                  setMatriculaValidated(null);
+                  setShowMatriculaConfirmation(false);
+                  if (errors.employeeId) validateField('employeeId', text);
+                }}
+                onBlur={() => {
+                  validateField('employeeId', employeeId);
+                  // Validar matrícula automáticamente al perder el foco
+                  if (employeeId.trim() && !errors.employeeId) {
+                    handleValidateMatricula(employeeId);
+                  }
+                }}
+                autoCorrect={false}
+                autoCapitalize="none"
+                editable={!isLoading && !isValidatingMatricula}
+              />
+
+              {/* Indicador de estado de validación */}
+              <View className="absolute right-3 top-4">
+                {isValidatingMatricula ? (
+                  <ActivityIndicator size="small" color="#3b82f6" />
+                ) : matriculaValidated === true ? (
+                  <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+                ) : matriculaValidated === false ? (
+                  <Ionicons name="alert-circle" size={20} color="#f59e0b" />
+                ) : null}
+              </View>
+            </View>
+
+            {/* Mensajes de estado */}
             {errors.employeeId ? (
               <Text className="text-red-500 text-xs mt-1">{errors.employeeId}</Text>
+            ) : matriculaValidated === true ? (
+              <Text className="text-green-600 text-xs mt-1">✅ Matrícula verificada</Text>
+            ) : matriculaValidated === false ? (
+              <Text className="text-orange-600 text-xs mt-1">⚠️ Matrícula no encontrada en registros</Text>
             ) : null}
           </View>
 
@@ -419,6 +541,55 @@ const RegisterScreen = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Diálogo de confirmación de matrícula */}
+      {showMatriculaConfirmation && (
+        <View className="absolute inset-0 bg-black/50 flex-1 justify-center items-center z-50">
+          <View className="bg-white rounded-lg p-6 mx-8 max-w-sm">
+            <View className="items-center mb-4">
+              <Ionicons name="help-circle" size={48} color="#f59e0b" />
+            </View>
+
+            <Text className="text-lg font-bold text-gray-900 text-center mb-2">
+              Matrícula No Encontrada
+            </Text>
+
+            <Text className="text-gray-600 text-center mb-6">
+              No encontramos tu matrícula <Text className="font-bold">{employeeId}</Text> en nuestros registros.
+            </Text>
+
+            <Text className="text-gray-700 text-center mb-6 font-medium">
+              ¿Es correcta?
+            </Text>
+
+            <View className="flex-row space-x-3">
+              <TouchableOpacity
+                className="flex-1 bg-gray-100 py-3 rounded-lg border border-gray-300"
+                onPress={() => handleMatriculaConfirmation(false)}
+                disabled={isLoading}
+              >
+                <Text className="text-gray-700 font-medium text-center">
+                  No, corregir
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="flex-1 bg-blue-600 py-3 rounded-lg"
+                onPress={() => handleMatriculaConfirmation(true)}
+                disabled={isLoading}
+              >
+                <Text className="text-white font-medium text-center">
+                  Sí, es correcta
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text className="text-xs text-gray-500 text-center mt-4">
+              Si confirmas que es correcta, tu cuenta quedará pendiente de verificación manual.
+            </Text>
+          </View>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 };

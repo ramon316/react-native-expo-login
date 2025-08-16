@@ -16,7 +16,7 @@ export interface AuthState {
     changeStatus: (token?:string, user?:User, origin?: string) => Promise<boolean>;
     login: (email: string, password: string) => Promise<boolean>;
     logout: () => Promise<void>;
-    register: (name: string, employee_id: string, email: string, password: string, confirmPassword: string) => Promise<boolean>;
+    register: (name: string, employee_id: string, email: string, password: string, confirmPassword: string, matriculaValidated?: boolean) => Promise<boolean>;
     checkAuthStatus: () => Promise<void>;
 }
 
@@ -108,8 +108,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         return result;
     },
 
-    register: async (name: string, employee_id: string, email: string, password: string, confirmPassword: string) => {
+    register: async (name: string, employee_id: string, email: string, password: string, confirmPassword: string, matriculaValidated?: boolean) => {
         console.log('🔐 useAuthStore.register iniciado');
+        console.log('🎓 Estado de matrícula validada:', matriculaValidated);
 
         // Validación básica de contraseñas
         if (password !== confirmPassword) {
@@ -121,6 +122,15 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         console.log('📦 Respuesta de authRegister:', resp);
         console.log('🔑 Token recibido:', resp?.token);
         console.log('👤 User recibido:', resp?.user);
+
+        // Si la matrícula no fue validada (false), el usuario quedará pendiente de verificación
+        if (matriculaValidated === false && resp?.user) {
+            console.log('⚠️ Usuario registrado con matrícula no validada - quedará pendiente de verificación');
+            // El estado del usuario ya debería ser 'pending_verification' desde el backend
+        } else if (matriculaValidated === true && resp?.user) {
+            console.log('✅ Usuario registrado con matrícula validada - cuenta activa');
+            // El estado del usuario debería ser 'active' desde el backend
+        }
 
         const result = await get().changeStatus(resp?.token, resp?.user, 'REGISTER');
         console.log('✅ Resultado de changeStatus desde REGISTER:', result);
