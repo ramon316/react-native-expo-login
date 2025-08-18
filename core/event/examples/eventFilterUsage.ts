@@ -1,13 +1,34 @@
 /* Ejemplos de uso de los nuevos filtros de eventos */
 
-import { useEventStore } from '@/presentation/event/store/useEventStore';
-import { 
-  getEvents, 
-  getActiveEvents, 
-  getUpcomingEvents, 
-  getPastEvents,
-  type EventFilter 
+import {
+    getActiveEvents,
+    getEvents,
+    getPastEvents,
+    getUpcomingEvents,
+    type EventFilter
 } from '@/core/event/actions/eventActions';
+import { useEventStore } from '@/presentation/event/store/useEventStore';
+
+// Logger condicional basado en el entorno
+const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
+const logger = {
+    log: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.log(...args);
+        }
+    },
+    warn: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.warn(...args);
+        }
+    },
+    error: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.error(...args);
+        }
+        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
+    }
+};
 
 /**
  * Ejemplos de uso directo de las funciones de API
@@ -18,9 +39,9 @@ export const directApiUsage = {
    * Obtener eventos activos (start_date <= now && end_date >= now)
    */
   async getActiveEvents() {
-    console.log('📋 Obteniendo eventos activos...');
+    logger.log('📋 Obteniendo eventos activos...');
     const events = await getActiveEvents();
-    console.log('✅ Eventos activos:', events?.length || 0);
+    logger.log('✅ Eventos activos:', events?.length || 0);
     return events;
   },
 
@@ -28,9 +49,9 @@ export const directApiUsage = {
    * Obtener próximos eventos (start_date > now)
    */
   async getUpcomingEvents() {
-    console.log('📋 Obteniendo eventos próximos...');
+    logger.log('📋 Obteniendo eventos próximos...');
     const events = await getUpcomingEvents();
-    console.log('✅ Eventos próximos:', events?.length || 0);
+    logger.log('✅ Eventos próximos:', events?.length || 0);
     return events;
   },
 
@@ -38,9 +59,9 @@ export const directApiUsage = {
    * Obtener eventos pasados (end_date < now)
    */
   async getPastEvents() {
-    console.log('📋 Obteniendo eventos pasados...');
+    logger.log('📋 Obteniendo eventos pasados...');
     const events = await getPastEvents();
-    console.log('✅ Eventos pasados:', events?.length || 0);
+    logger.log('✅ Eventos pasados:', events?.length || 0);
     return events;
   },
 
@@ -48,9 +69,9 @@ export const directApiUsage = {
    * Obtener eventos con límite
    */
   async getEventsWithLimit() {
-    console.log('📋 Obteniendo últimos 5 eventos activos...');
+    logger.log('📋 Obteniendo últimos 5 eventos activos...');
     const events = await getActiveEvents(5);
-    console.log('✅ Últimos 5 eventos activos:', events?.length || 0);
+    logger.log('✅ Últimos 5 eventos activos:', events?.length || 0);
     return events;
   },
 
@@ -58,9 +79,9 @@ export const directApiUsage = {
    * Obtener eventos con filtro personalizado
    */
   async getEventsWithCustomFilter(filter: EventFilter, limit?: number) {
-    console.log(`📋 Obteniendo eventos con filtro: ${filter}, límite: ${limit}`);
+    logger.log(`📋 Obteniendo eventos con filtro: ${filter}, límite: ${limit}`);
     const events = await getEvents({ filter, limit });
-    console.log(`✅ Eventos ${filter}:`, events?.length || 0);
+    logger.log(`✅ Eventos ${filter}:`, events?.length || 0);
     return events;
   }
 };
@@ -85,9 +106,9 @@ export const storeUsage = {
     const loadActiveEvents = async () => {
       const success = await fetchActiveEvents();
       if (success) {
-        console.log('✅ Eventos activos cargados en el store');
+        logger.log('✅ Eventos activos cargados en el store');
       } else {
-        console.log('❌ Error al cargar eventos activos');
+        logger.log('❌ Error al cargar eventos activos');
       }
     };
 
@@ -114,9 +135,9 @@ export const storeUsage = {
     const loadUpcomingEvents = async () => {
       const success = await fetchUpcomingEvents(10);
       if (success) {
-        console.log('✅ Próximos eventos cargados en el store');
+        logger.log('✅ Próximos eventos cargados en el store');
       } else {
-        console.log('❌ Error al cargar próximos eventos');
+        logger.log('❌ Error al cargar próximos eventos');
       }
     };
 

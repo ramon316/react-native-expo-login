@@ -16,6 +16,28 @@ import {
   useWindowDimensions,
   View
 } from 'react-native';
+import CustomCheckbox from './components/CustomCheckbox';
+
+// Logger condicional basado en el entorno
+const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
+const logger = {
+    log: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.log(...args);
+        }
+    },
+    warn: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.warn(...args);
+        }
+    },
+    error: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.error(...args);
+        }
+        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
+    }
+};
 
 const RegisterScreen = () => {
   // Referencias para el ScrollView y campos
@@ -38,6 +60,10 @@ const RegisterScreen = () => {
   const [isValidatingMatricula, setIsValidatingMatricula] = useState(false);
   const [matriculaValidated, setMatriculaValidated] = useState<boolean | null>(null);
   const [showMatriculaConfirmation, setShowMatriculaConfirmation] = useState(false);
+
+  // Estados para checkboxes obligatorios
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [acceptedLocation, setAcceptedLocation] = useState(false);
 
   // Estados para errores de validación
   const [errors, setErrors] = useState({
@@ -132,7 +158,7 @@ const RegisterScreen = () => {
 
     // Validar matrícula antes del registro si no está validada
     if (matriculaValidated === null) {
-      console.log('🔍 Validando matrícula antes del registro...');
+      logger.log('🔍 Validando matrícula antes del registro...');
       await handleValidateMatricula(employeeId);
       return; // Esperar a que se complete la validación
     }
@@ -145,7 +171,7 @@ const RegisterScreen = () => {
 
     setIsLoading(true);
     try {
-      console.log('📝 Iniciando registro con datos:', {
+      logger.log('📝 Iniciando registro con datos:', {
         name: name.trim(),
         employeeId: employeeId.trim(),
         email: email.trim().toLowerCase(),
@@ -166,8 +192,8 @@ const RegisterScreen = () => {
         // Obtener el usuario del store después del registro exitoso
         const { user } = useAuthStore.getState();
 
-        console.log('👤 Usuario registrado:', user);
-        console.log('🔑 Rol del usuario:', user?.role);
+        logger.log('👤 Usuario registrado:', user);
+        logger.log('🔑 Rol del usuario:', user?.role);
 
         // Mensaje personalizado según el estado de la matrícula
         const title = '✅ Cuenta Creada';
@@ -176,7 +202,7 @@ const RegisterScreen = () => {
         if (matriculaValidated === false) {
           message = 'Tu cuenta ha sido creada pero quedará pendiente de verificación manual debido a que tu matrícula no fue encontrada en nuestros registros. Te notificaremos cuando sea verificada.';
         } else {
-          message = 'Tu cuenta ha sido creada exitosamente. Serás redirigido al dashboard.';
+          message = 'Tu cuenta ha sido creada exitosamente.';
         }
 
         Alert.alert(
@@ -200,7 +226,7 @@ const RegisterScreen = () => {
       }
 
     } catch (error) {
-      console.error('Error en handleRegister:', error);
+      logger.error('Error en handleRegister:', error);
       Alert.alert('Error', 'Ocurrió un error al crear la cuenta');
     } finally {
       setIsLoading(false);
@@ -214,7 +240,7 @@ const RegisterScreen = () => {
     setIsValidatingMatricula(true);
     try {
       const isValid = await validateMatricula(matricula);
-      console.log('🔍 Resultado de validación de matrícula:', isValid);
+      logger.log('🔍 Resultado de validación de matrícula:', isValid);
 
       if (isValid === null) {
         // Error en la validación
@@ -234,7 +260,7 @@ const RegisterScreen = () => {
         setShowMatriculaConfirmation(false);
       }
     } catch (error) {
-      console.error('❌ Error al validar matrícula:', error);
+      logger.error('❌ Error al validar matrícula:', error);
       Alert.alert(
         '❌ Error',
         'Ocurrió un error al validar la matrícula. Intenta nuevamente.',
@@ -252,7 +278,7 @@ const RegisterScreen = () => {
       // El usuario confirma que la matrícula es correcta
       setMatriculaValidated(true);
       setShowMatriculaConfirmation(false);
-      console.log('✅ Usuario confirmó que la matrícula es correcta');
+      logger.log('✅ Usuario confirmó que la matrícula es correcta');
     } else {
       // El usuario dice que la matrícula es incorrecta
       setMatriculaValidated(null);
@@ -274,6 +300,8 @@ const RegisterScreen = () => {
            password &&
            confirmPassword &&
            matriculaValidated === true && // Matrícula debe estar validada
+           acceptedPrivacy && // Debe aceptar aviso de privacidad
+           acceptedLocation && // Debe autorizar uso de ubicación
            Object.values(errors).every(error => error === '');
   };
 
@@ -296,12 +324,12 @@ const RegisterScreen = () => {
         <View style={{ height: height * 0.20 }} className="justify-end pb-8">
           {/* Textos de bienvenida */}
           <View className="px-6">
-            <Text className="text-4xl font-bold text-gray-800 mb-2">
+            <Text className="text-4xl font-bold text-rose-800 mb-2">
               Crear Cuenta
             </Text>
-            <Text className="text-3xl font-bold text-blue-600 mb-4">
+            {/* <Text className="text-3xl font-bold text-blue-600 mb-4">
               Registro
-            </Text>
+            </Text> */}
             <Text className="text-gray-500 text-base">
               Complete el formulario para crear su cuenta
             </Text>
@@ -319,7 +347,7 @@ const RegisterScreen = () => {
               className={`px-4 py-4 border rounded-lg text-base ${
                 errors.name ? 'border-red-500' : 'border-gray-200'
               }`}
-              placeholder="Ingrese su nombre completo"
+              placeholder="Nombre completo iniciando por apellidos"
               placeholderTextColor="#9CA3AF"
               value={name}
               onChangeText={(text) => {
@@ -504,6 +532,39 @@ const RegisterScreen = () => {
             ) : null}
           </View>
 
+          {/* Checkboxes Obligatorios */}
+          <View className="mb-6">
+            <Text className="text-gray-700 text-sm font-medium mb-4">
+              Términos y Condiciones
+            </Text>
+
+            <View className="space-y-1">
+              {/* Checkbox Aviso de Privacidad */}
+              <View className="mb-4">
+                <CustomCheckbox
+                  checked={acceptedPrivacy}
+                  onPress={() => setAcceptedPrivacy(!acceptedPrivacy)}
+                  disabled={isLoading}
+                  title="Acepto el aviso de privacidad"
+                  description="Es necesario aceptar para continuar con el registro"
+                  required={true}
+                />
+              </View>
+
+              {/* Checkbox Autorización de Ubicación */}
+              <View>
+                <CustomCheckbox
+                  checked={acceptedLocation}
+                  onPress={() => setAcceptedLocation(!acceptedLocation)}
+                  disabled={isLoading}
+                  title="Autorizo el uso de mi ubicación geográfica para verificar asistencia"
+                  description="Necesario para registrar tu asistencia en eventos"
+                  required={true}
+                />
+              </View>
+            </View>
+          </View>
+
           {/* Botón de Registro */}
           <TouchableOpacity
             className={`py-4 rounded-lg mb-4 ${
@@ -523,6 +584,42 @@ const RegisterScreen = () => {
             )}
           </TouchableOpacity>
 
+          {/* Mensaje informativo cuando el formulario no es válido */}
+          {!isFormValid() && !isLoading && (
+            <View className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <Text className="text-gray-600 text-sm text-center mb-2">
+                Para continuar, completa lo siguiente:
+              </Text>
+              <View className="space-y-1">
+                {(!name.trim() || !employeeId.trim() || !email.trim() || !password || !confirmPassword) && (
+                  <Text className="text-gray-500 text-xs text-center">
+                    • Completa todos los campos obligatorios
+                  </Text>
+                )}
+                {matriculaValidated !== true && (
+                  <Text className="text-gray-500 text-xs text-center">
+                    • Valida tu matrícula
+                  </Text>
+                )}
+                {!acceptedPrivacy && (
+                  <Text className="text-gray-500 text-xs text-center">
+                    • Acepta el aviso de privacidad
+                  </Text>
+                )}
+                {!acceptedLocation && (
+                  <Text className="text-gray-500 text-xs text-center">
+                    • Autoriza el uso de ubicación
+                  </Text>
+                )}
+                {Object.values(errors).some(error => error !== '') && (
+                  <Text className="text-gray-500 text-xs text-center">
+                    • Corrige los errores en el formulario
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
+
           {/* Link a login */}
           <View className="items-center flex-row justify-center mt-4">
             <Text className="text-gray-500 text-sm mr-2">
@@ -534,11 +631,11 @@ const RegisterScreen = () => {
           </View>
 
           {/* Texto de ayuda */}
-          <View className="items-center mt-6">
+          {/* <View className="items-center mt-6">
             <Text className="text-gray-400 text-xs text-center">
               Al crear una cuenta, aceptas nuestros términos y condiciones
             </Text>
-          </View>
+          </View> */}
         </View>
       </ScrollView>
 

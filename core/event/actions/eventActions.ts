@@ -7,6 +7,27 @@ import {
   UpdateEventRequest
 } from "../interface/event";
 
+// Logger condicional basado en el entorno
+const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
+const logger = {
+    log: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.log(...args);
+        }
+    },
+    warn: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.warn(...args);
+        }
+    },
+    error: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.error(...args);
+        }
+        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
+    }
+};
+
 /**
  * Tipos de filtros para eventos
  */
@@ -26,7 +47,7 @@ export interface GetEventsParams {
  */
 export const getEvents = async (params: GetEventsParams): Promise<Event[] | null> => {
   try {
-    console.log('📋 Obteniendo eventos del usuario con filtros:', params);
+    logger.log('📋 Obteniendo eventos del usuario con filtros:', params);
 
     // Construir parámetros de query
     const queryParams = new URLSearchParams({
@@ -40,34 +61,34 @@ export const getEvents = async (params: GetEventsParams): Promise<Event[] | null
 
     const { data } = await attendancesApi.get(`/events?${queryParams.toString()}`);
 
-    console.log('📦 Respuesta completa de getEvents:', data);
+    logger.log('📦 Respuesta completa de getEvents:', data);
 
     // Verificar si la respuesta tiene el formato con success y events (formato de tu API)
     if (data.success && data.events && Array.isArray(data.events)) {
-      console.log('✅ Eventos obtenidos exitosamente (formato con events):', data.events.length);
+      logger.log('✅ Eventos obtenidos exitosamente (formato con events):', data.events.length);
       return data.events;
     }
 
     // Verificar si la respuesta tiene el formato con success y data
     if (data.success && data.data && Array.isArray(data.data)) {
-      console.log('✅ Eventos obtenidos exitosamente (formato con data):', data.data.length);
+      logger.log('✅ Eventos obtenidos exitosamente (formato con data):', data.data.length);
       return data.data;
     }
 
     // Verificar si la respuesta es directamente un array de eventos
     if (Array.isArray(data)) {
-      console.log('✅ Eventos obtenidos exitosamente (formato array directo):', data.length);
+      logger.log('✅ Eventos obtenidos exitosamente (formato array directo):', data.length);
       return data;
     }
 
-    console.log('❌ Error en la respuesta de eventos - formato no reconocido:', data);
+    logger.log('❌ Error en la respuesta de eventos - formato no reconocido:', data);
     return null;
 
   } catch (error: any) {
-    console.error('❌ Error al obtener eventos:', error);
+    logger.error('❌ Error al obtener eventos:', error);
 
     if (error.response?.data?.message) {
-      console.error('📝 Mensaje del servidor:', error.response.data.message);
+      logger.error('📝 Mensaje del servidor:', error.response.data.message);
     }
 
     return null;
@@ -111,42 +132,42 @@ export const getAllEvents = async (): Promise<Event[] | null> => {
  */
 export const createEvent = async (eventData: CreateEventRequest): Promise<Event | null> => {
   try {
-    console.log('📝 Creando nuevo evento:', eventData);
+    logger.log('📝 Creando nuevo evento:', eventData);
 
     const { data } = await attendancesApi.post('/events', eventData);
 
-    console.log('📦 Respuesta completa de la API:', data);
+    logger.log('📦 Respuesta completa de la API:', data);
 
     // Verificar si la respuesta tiene success y event (formato de tu API)
     if (data.success && data.event) {
-      console.log('✅ Evento creado exitosamente:', data.event);
+      logger.log('✅ Evento creado exitosamente:', data.event);
       return data.event;
     }
 
     // Verificar si la respuesta tiene el formato con success y data
     if (data.success && data.data) {
-      console.log('✅ Evento creado exitosamente (formato con data):', data.data);
+      logger.log('✅ Evento creado exitosamente (formato con data):', data.data);
       return data.data;
     }
 
     // Verificar si la respuesta tiene el evento directamente
     if (data.id) {
-      console.log('✅ Evento creado exitosamente (formato directo):', data);
+      logger.log('✅ Evento creado exitosamente (formato directo):', data);
       return data;
     }
 
-    console.log('❌ Error al crear evento - formato de respuesta no reconocido:', data);
+    logger.log('❌ Error al crear evento - formato de respuesta no reconocido:', data);
     return null;
 
   } catch (error: any) {
-    console.error('❌ Error al crear evento:', error);
+    logger.error('❌ Error al crear evento:', error);
 
     if (error.response?.data?.message) {
-      console.error('📝 Mensaje del servidor:', error.response.data.message);
+      logger.error('📝 Mensaje del servidor:', error.response.data.message);
     }
 
     if (error.response?.data?.errors) {
-      console.error('📝 Errores de validación:', error.response.data.errors);
+      logger.error('📝 Errores de validación:', error.response.data.errors);
     }
 
     return null;
@@ -158,25 +179,25 @@ export const createEvent = async (eventData: CreateEventRequest): Promise<Event 
  */
 export const getEventById = async (eventId: number): Promise<Event | null> => {
   try {
-    console.log('🔍 Obteniendo evento por ID:', eventId);
-    
+    logger.log('🔍 Obteniendo evento por ID:', eventId);
+
     const { data } = await attendancesApi.get(`/events/${eventId}`);
 
     if (data.success && data.event) {
-      console.log('✅ Evento obtenido exitosamente:', data.event);
+      logger.log('✅ Evento obtenido exitosamente:', data.event);
       return data.event;
     }
-    
-    console.log('❌ Error al obtener evento:', data.message);
+
+    logger.log('❌ Error al obtener evento:', data.message);
     return null;
-    
+
   } catch (error: any) {
-    console.error('❌ Error al obtener evento:', error);
-    
+    logger.error('❌ Error al obtener evento:', error);
+
     if (error.response?.data?.message) {
-      console.error('📝 Mensaje del servidor:', error.response.data.message);
+      logger.error('📝 Mensaje del servidor:', error.response.data.message);
     }
-    
+
     return null;
   }
 };
@@ -186,30 +207,30 @@ export const getEventById = async (eventId: number): Promise<Event | null> => {
  */
 export const updateEvent = async (eventData: UpdateEventRequest): Promise<Event | null> => {
   try {
-    console.log('✏️ Actualizando evento:', eventData);
-    
+    logger.log('✏️ Actualizando evento:', eventData);
+
     const { id, ...updateData } = eventData;
     const { data } = await attendancesApi.put(`/events/${id}`, updateData);
 
     if (data.success && data.event) {
-      console.log('✅ Evento actualizado exitosamente:', data.event);
+      logger.log('✅ Evento actualizado exitosamente:', data.event);
       return data.event;
     }
-    
-    console.log('❌ Error al actualizar evento:', data.message);
+
+    logger.log('❌ Error al actualizar evento:', data.message);
     return null;
-    
+
   } catch (error: any) {
-    console.error('❌ Error al actualizar evento:', error);
-    
+    logger.error('❌ Error al actualizar evento:', error);
+
     if (error.response?.data?.message) {
-      console.error('📝 Mensaje del servidor:', error.response.data.message);
+      logger.error('📝 Mensaje del servidor:', error.response.data.message);
     }
-    
+
     if (error.response?.data?.errors) {
-      console.error('📝 Errores de validación:', error.response.data.errors);
+      logger.error('📝 Errores de validación:', error.response.data.errors);
     }
-    
+
     return null;
   }
 };
@@ -219,25 +240,25 @@ export const updateEvent = async (eventData: UpdateEventRequest): Promise<Event 
  */
 export const deleteEvent = async (eventId: number): Promise<boolean> => {
   try {
-    console.log('🗑️ Eliminando evento:', eventId);
-    
+    logger.log('🗑️ Eliminando evento:', eventId);
+
     const { data } = await attendancesApi.delete<DeleteEventResponse>(`/events/${eventId}`);
-    
+
     if (data.success) {
-      console.log('✅ Evento eliminado exitosamente:', data.message);
+      logger.log('✅ Evento eliminado exitosamente:', data.message);
       return true;
     }
-    
-    console.log('❌ Error al eliminar evento:', data.message);
+
+    logger.log('❌ Error al eliminar evento:', data.message);
     return false;
-    
+
   } catch (error: any) {
-    console.error('❌ Error al eliminar evento:', error);
-    
+    logger.error('❌ Error al eliminar evento:', error);
+
     if (error.response?.data?.message) {
-      console.error('📝 Mensaje del servidor:', error.response.data.message);
+      logger.error('📝 Mensaje del servidor:', error.response.data.message);
     }
-    
+
     return false;
   }
 };

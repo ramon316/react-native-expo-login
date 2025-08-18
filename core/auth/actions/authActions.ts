@@ -1,9 +1,30 @@
 import { attendancesApi } from "../api/attendancesApi";
 import { AuthResponse, User } from "../interface/user";
 
+// Logger condicional basado en el entorno
+const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
+const logger = {
+    log: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.log(...args);
+        }
+    },
+    warn: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.warn(...args);
+        }
+    },
+    error: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.error(...args);
+        }
+        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
+    }
+};
+
 const returnUserToken = (data: AuthResponse): { user: User; token: string } | null => {
     if (!data.user || !data.token) {
-        console.error('❌ Respuesta de autenticación incompleta:', data);
+        logger.error('❌ Respuesta de autenticación incompleta:', data);
         return null;
     }
 
@@ -16,7 +37,7 @@ const returnUserToken = (data: AuthResponse): { user: User; token: string } | nu
 export const authLogin = async (email: string, password: string) => {
     email = email.toLowerCase();
 
-    console.log(`AuthLogin recibe, ${email} and password ${password}`);
+    logger.log(`AuthLogin recibe, ${email} and password ${password}`);
 
     try {
         const { data } = await attendancesApi.post<AuthResponse>('/login', {
@@ -25,22 +46,22 @@ export const authLogin = async (email: string, password: string) => {
 
         const result = returnUserToken(data);
         if (!result) {
-            console.error('❌ Error al procesar respuesta de login');
+            logger.error('❌ Error al procesar respuesta de login');
             return null;
         }
 
         return result;
     } catch (error: any) {
-        console.log('❌ Error completo en authLogin:', error);
-        console.log('📡 Error message:', error.message);
-        console.log('🔢 Error status:', error.response?.status);
-        console.log('📄 Error data:', error.response?.data);
-        console.log('🌐 Error config URL:', error.config?.url);
-        console.log('🎯 Error config baseURL:', error.config?.baseURL);
+        logger.log('❌ Error completo en authLogin:', error);
+        logger.log('📡 Error message:', error.message);
+        logger.log('🔢 Error status:', error.response?.status);
+        logger.log('📄 Error data:', error.response?.data);
+        logger.log('🌐 Error config URL:', error.config?.url);
+        logger.log('🎯 Error config baseURL:', error.config?.baseURL);
 
         if (error.response?.status === 404) {
-            console.log('🚨 ERROR 404: La ruta no existe en el servidor');
-            console.log('🔍 Verifica que la URL sea correcta y que Laravel esté corriendo');
+            logger.log('🚨 ERROR 404: La ruta no existe en el servidor');
+            logger.log('🔍 Verifica que la URL sea correcta y que Laravel esté corriendo');
         }
 
         return null;
@@ -59,7 +80,7 @@ export const authRegister = async (
     name = name.trim();
     employee_id = employee_id.trim();
 
-    console.log(`AuthRegister recibe:`, {
+    logger.log(`AuthRegister recibe:`, {
         name,
         employee_id,
         email,
@@ -67,8 +88,8 @@ export const authRegister = async (
     });
 
     try {
-        console.log('🌐 URL base de la API:', attendancesApi.defaults.baseURL);
-        console.log('🎯 URL completa del request:', `${attendancesApi.defaults.baseURL}/register`);
+        logger.log('🌐 URL base de la API:', attendancesApi.defaults.baseURL);
+        logger.log('🎯 URL completa del request:', `${attendancesApi.defaults.baseURL}/register`);
 
         const { data } = await attendancesApi.post<AuthResponse>('/register', {
             name,
@@ -77,28 +98,28 @@ export const authRegister = async (
             password
         });
 
-        console.log(`AuthRegister response:`, JSON.stringify(data));
+        logger.log(`AuthRegister response:`, JSON.stringify(data));
 
         const result = returnUserToken(data);
         if (!result) {
-            console.error('❌ Error al procesar respuesta de registro');
+            logger.error('❌ Error al procesar respuesta de registro');
             return null;
         }
 
         return result;
     } catch (error: any) {
-        console.log('❌ Error completo en authRegister:', error);
-        console.log('📡 Error message:', error.message);
-        console.log('🔢 Error status:', error.response?.status);
-        console.log('📄 Error data:', error.response?.data);
-        console.log('🌐 Error config URL:', error.config?.url);
-        console.log('🎯 Error config baseURL:', error.config?.baseURL);
+        logger.log('❌ Error completo en authRegister:', error);
+        logger.log('📡 Error message:', error.message);
+        logger.log('🔢 Error status:', error.response?.status);
+        logger.log('📄 Error data:', error.response?.data);
+        logger.log('🌐 Error config URL:', error.config?.url);
+        logger.log('🎯 Error config baseURL:', error.config?.baseURL);
 
         if (error.response?.status === 422) {
-            console.log('🚨 ERROR 422: Datos de validación incorrectos');
-            console.log('🔍 Detalles de validación:', error.response?.data);
+            logger.log('🚨 ERROR 422: Datos de validación incorrectos');
+            logger.log('🔍 Detalles de validación:', error.response?.data);
         } else if (error.response?.status === 409) {
-            console.log('🚨 ERROR 409: Usuario ya existe');
+            logger.log('🚨 ERROR 409: Usuario ya existe');
         }
 
         return null;
@@ -107,27 +128,27 @@ export const authRegister = async (
 
 export const authCheckStatus = async () => {
     try {
-        console.log('📡 Verificando estado de autenticación con el servidor...');
+        logger.log('📡 Verificando estado de autenticación con el servidor...');
         const { data } = await attendancesApi.get<AuthResponse>('/check-status');
 
-        console.log('✅ Respuesta de check-status:', data);
+        logger.log('✅ Respuesta de check-status:', data);
 
         const result = returnUserToken(data);
         if (!result) {
-            console.error('❌ Error al procesar respuesta de check-status');
+            logger.error('❌ Error al procesar respuesta de check-status');
             return null;
         }
 
         return result;
     } catch (error: any) {
-        console.error('❌ Error en authCheckStatus:', error);
+        logger.error('❌ Error en authCheckStatus:', error);
 
         if (error.response?.status === 401) {
-            console.error('🚨 Token expirado o inválido (401)');
+            logger.error('🚨 Token expirado o inválido (401)');
         } else if (error.response?.status === 500) {
-            console.error('🚨 Error del servidor (500)');
+            logger.error('🚨 Error del servidor (500)');
         } else if (error.code === 'NETWORK_ERROR') {
-            console.error('🚨 Error de red - servidor no disponible');
+            logger.error('🚨 Error de red - servidor no disponible');
         }
 
         return null;
@@ -141,13 +162,13 @@ export const authCheckStatus = async () => {
  */
 export const validateMatricula = async (matricula: string): Promise<boolean | null> => {
     try {
-        console.log('🔍 Validando matrícula:', matricula);
+        logger.log('🔍 Validando matrícula:', matricula);
 
         const { data } = await attendancesApi.post('/validate-matricula', {
             matricula: matricula.trim()
         });
 
-        console.log('📦 Respuesta de validación de matrícula:', data);
+        logger.log('📦 Respuesta de validación de matrícula:', data);
 
         // Asumiendo que la API retorna { success: boolean, exists: boolean }
         if (data.success !== undefined) {
@@ -164,13 +185,13 @@ export const validateMatricula = async (matricula: string): Promise<boolean | nu
             return data;
         }
 
-        console.warn('⚠️ Formato de respuesta inesperado:', data);
+        logger.warn('⚠️ Formato de respuesta inesperado:', data);
         return null;
 
     } catch (error: any) {
-        console.error('❌ Error al validar matrícula:', error);
-        console.log('🔢 Error status:', error.response?.status);
-        console.log('📄 Error data:', error.response?.data);
+        logger.error('❌ Error al validar matrícula:', error);
+        logger.log('🔢 Error status:', error.response?.status);
+        logger.log('📄 Error data:', error.response?.data);
 
         if (error.response?.status === 404) {
             // Si el endpoint retorna 404, la matrícula no existe

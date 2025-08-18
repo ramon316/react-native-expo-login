@@ -16,6 +16,27 @@ import {
   View
 } from 'react-native';
 
+// Logger condicional basado en el entorno
+const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
+const logger = {
+    log: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.log(...args);
+        }
+    },
+    warn: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.warn(...args);
+        }
+    },
+    error: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.error(...args);
+        }
+        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
+    }
+};
+
 const LoginScreen = () => {
   // Referencias para el ScrollView
   const scrollViewRef = React.useRef<ScrollView>(null);
@@ -99,7 +120,7 @@ const LoginScreen = () => {
         setErrors(prev => ({ ...prev, password: '' }));
       }
     } catch (error) {
-      console.error('❌ Error en handleLogin:', error);
+      logger.error('❌ Error en handleLogin:', error);
       Alert.alert('Error', 'Ocurrió un error al iniciar sesión');
     } finally {
       setIsLoading(false);
@@ -132,12 +153,12 @@ const LoginScreen = () => {
         <View style={{ height: height * 0.35 }} className="justify-end pb-8">
           {/* Textos de bienvenida */}
           <View className="px-6">
-            <Text className="text-4xl font-bold text-gray-800 mb-2">
+            <Text className="text-4xl font-bold text-rose-800 mb-2">
               Bienvenido
             </Text>
-            <Text className="text-3xl font-bold text-blue-600 mb-4">
+            {/* <Text className="text-3xl font-bold text-blue-600 mb-4">
               Ingresar
-            </Text>
+            </Text> */}
             <Text className="text-gray-500 text-base">
               Por favor ingrese sus credenciales para continuar
             </Text>

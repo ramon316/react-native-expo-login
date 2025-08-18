@@ -17,6 +17,27 @@ import {
 import { LocationService } from "@/core/attendance/services/locationService";
 import { create } from "zustand";
 
+// Logger condicional basado en el entorno
+const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
+const logger = {
+    log: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.log(...args);
+        }
+    },
+    warn: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.warn(...args);
+        }
+    },
+    error: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.error(...args);
+        }
+        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
+    }
+};
+
 /**
  * Estado del store de asistencias
  */
@@ -78,22 +99,22 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
    */
   requestLocationPermission: async () => {
     try {
-      console.log('🔐 Solicitando permisos de ubicación...');
+      logger.log('🔐 Solicitando permisos de ubicación...');
       set({ status: 'requesting-location', error: null });
 
       const result = await LocationService.requestLocationPermissions();
-      
+
       if (result.granted) {
-        console.log('✅ Permisos concedidos');
-        set({ 
+        logger.log('✅ Permisos concedidos');
+        set({
           locationPermissionGranted: true,
           status: 'idle',
-          error: null 
+          error: null
         });
         return true;
       } else {
-        console.log('❌ Permisos denegados');
-        set({ 
+        logger.log('❌ Permisos denegados');
+        set({
           locationPermissionGranted: false,
           status: 'error',
           error: result.error || {
@@ -104,8 +125,8 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
         return false;
       }
     } catch (error) {
-      console.error('❌ Error al solicitar permisos:', error);
-      set({ 
+      logger.error('❌ Error al solicitar permisos:', error);
+      set({
         status: 'error',
         error: {
           type: 'permission',
@@ -122,22 +143,22 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
    */
   getCurrentLocation: async () => {
     try {
-      console.log('📍 Obteniendo ubicación actual...');
+      logger.log('📍 Obteniendo ubicación actual...');
       set({ isLoadingLocation: true, error: null });
 
       const result = await LocationService.getCurrentLocation();
-      
+
       if (result.location) {
-        console.log('✅ Ubicación obtenida exitosamente');
-        set({ 
+        logger.log('✅ Ubicación obtenida exitosamente');
+        set({
           userLocation: result.location,
           isLoadingLocation: false,
-          error: null 
+          error: null
         });
         return true;
       } else {
-        console.log('❌ Error al obtener ubicación');
-        set({ 
+        logger.log('❌ Error al obtener ubicación');
+        set({
           isLoadingLocation: false,
           error: result.error || {
             type: 'location',
@@ -147,8 +168,8 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
         return false;
       }
     } catch (error) {
-      console.error('❌ Error inesperado al obtener ubicación:', error);
-      set({ 
+      logger.error('❌ Error inesperado al obtener ubicación:', error);
+      set({
         isLoadingLocation: false,
         error: {
           type: 'location',
@@ -164,11 +185,11 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
    * Establece el código QR escaneado
    */
   setScannedQRCode: (qrCode: string) => {
-    console.log('📱 QR Code escaneado:', qrCode);
-    set({ 
+    logger.log('📱 QR Code escaneado:', qrCode);
+    set({
       scannedQRCode: qrCode,
       status: 'scanning',
-      error: null 
+      error: null
     });
   },
 
@@ -180,8 +201,8 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
       const { userLocation } = get();
       
       if (!userLocation) {
-        console.error('❌ No hay ubicación disponible');
-        set({ 
+        logger.error('❌ No hay ubicación disponible');
+        set({
           error: {
             type: 'location',
             message: 'Se requiere ubicación para registrar asistencia'
@@ -190,11 +211,11 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
         return null;
       }
 
-      console.log('📝 Enviando registro de asistencia...');
-      set({ 
-        isSubmittingAttendance: true, 
+      logger.log('📝 Enviando registro de asistencia...');
+      set({
+        isSubmittingAttendance: true,
         status: 'submitting',
-        error: null 
+        error: null
       });
 
       const attendanceData: AttendanceRequest = {
@@ -206,7 +227,7 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
       const result = await submitAttendance(attendanceData);
       
       if (result) {
-        console.log('✅ Asistencia registrada exitosamente');
+        logger.log('✅ Asistencia registrada exitosamente');
         set({
           currentAttendance: result.attendance,
           isSubmittingAttendance: false,
@@ -215,7 +236,7 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
         });
         return result.attendance;
       } else {
-        console.log('❌ Error al registrar asistencia');
+        logger.log('❌ Error al registrar asistencia');
         set({
           isSubmittingAttendance: false,
           status: 'error',
@@ -227,7 +248,7 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
         return null;
       }
     } catch (error: any) {
-      console.error('❌ Error inesperado al registrar asistencia:', error);
+      logger.error('❌ Error inesperado al registrar asistencia:', error);
 
       // Extraer mensaje específico del error de la API
       let errorMessage = 'Error inesperado al registrar asistencia';
@@ -299,20 +320,20 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
    */
   loadAttendanceHistory: async (page: number = 1) => {
     try {
-      console.log('📋 Cargando historial de asistencias...');
+      logger.log('📋 Cargando historial de asistencias...');
       set({ isLoadingHistory: true, error: null });
 
       const history = await getAttendanceHistory(page);
-      
+
       if (history) {
-        console.log('✅ Historial cargado exitosamente');
-        set({ 
+        logger.log('✅ Historial cargado exitosamente');
+        set({
           attendanceHistory: history,
-          isLoadingHistory: false 
+          isLoadingHistory: false
         });
       } else {
-        console.log('❌ Error al cargar historial');
-        set({ 
+        logger.log('❌ Error al cargar historial');
+        set({
           isLoadingHistory: false,
           error: {
             type: 'network',
@@ -321,8 +342,8 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
         });
       }
     } catch (error) {
-      console.error('❌ Error al cargar historial:', error);
-      set({ 
+      logger.error('❌ Error al cargar historial:', error);
+      set({
         isLoadingHistory: false,
         error: {
           type: 'network',
@@ -338,20 +359,20 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
    */
   loadAttendanceStats: async () => {
     try {
-      console.log('📊 Cargando estadísticas de asistencia...');
+      logger.log('📊 Cargando estadísticas de asistencia...');
       set({ isLoadingStats: true, error: null });
 
       const stats = await getAttendanceStats();
-      
+
       if (stats) {
-        console.log('✅ Estadísticas cargadas exitosamente');
-        set({ 
+        logger.log('✅ Estadísticas cargadas exitosamente');
+        set({
           attendanceStats: stats,
-          isLoadingStats: false 
+          isLoadingStats: false
         });
       } else {
-        console.log('❌ Error al cargar estadísticas');
-        set({ 
+        logger.log('❌ Error al cargar estadísticas');
+        set({
           isLoadingStats: false,
           error: {
             type: 'network',
@@ -360,8 +381,8 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
         });
       }
     } catch (error) {
-      console.error('❌ Error al cargar estadísticas:', error);
-      set({ 
+      logger.error('❌ Error al cargar estadísticas:', error);
+      set({
         isLoadingStats: false,
         error: {
           type: 'network',
@@ -383,13 +404,13 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
    * Reinicia el flujo de asistencia
    */
   resetAttendanceFlow: () => {
-    console.log('🔄 Reiniciando flujo de asistencia');
-    set({ 
+    logger.log('🔄 Reiniciando flujo de asistencia');
+    set({
       status: 'idle',
       error: null,
       scannedQRCode: null,
       currentAttendance: null,
-      isSubmittingAttendance: false 
+      isSubmittingAttendance: false
     });
   },
 

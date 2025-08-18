@@ -12,6 +12,27 @@ import { CreateEventRequest, Event, UpdateEventRequest } from "@/core/event/inte
 /* Zustand */
 import { create } from "zustand";
 
+// Logger condicional basado en el entorno
+const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
+const logger = {
+    log: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.log(...args);
+        }
+    },
+    warn: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.warn(...args);
+        }
+    },
+    error: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.error(...args);
+        }
+        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
+    }
+};
+
 /* Estados de carga para eventos */
 export type EventLoadingStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -56,7 +77,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
    * Obtiene todos los eventos del usuario
    */
   fetchEvents: async () => {
-    console.log('📋 useEventStore.fetchEvents iniciado');
+    logger.log('📋 useEventStore.fetchEvents iniciado');
 
     set({ loadingStatus: 'loading', error: undefined });
 
@@ -64,7 +85,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
       const events = await getAllEvents();
 
       if (events) {
-        console.log('✅ Eventos obtenidos exitosamente:', events.length);
+        logger.log('✅ Eventos obtenidos exitosamente:', events.length);
         set({
           events,
           loadingStatus: 'success',
@@ -72,7 +93,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
         });
         return true;
       } else {
-        console.log('❌ No se pudieron obtener los eventos');
+        logger.log('❌ No se pudieron obtener los eventos');
         set({
           events: [],
           loadingStatus: 'error',
@@ -81,7 +102,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
         return false;
       }
     } catch (error: any) {
-      console.error('❌ Error en fetchEvents:', error);
+      logger.error('❌ Error en fetchEvents:', error);
       set({
         events: [],
         loadingStatus: 'error',
@@ -95,7 +116,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
    * Obtiene un evento específico por ID
    */
   fetchEventById: async (eventId: number) => {
-    console.log('🔍 useEventStore.fetchEventById iniciado para ID:', eventId);
+    logger.log('🔍 useEventStore.fetchEventById iniciado para ID:', eventId);
 
     set({ loadingStatus: 'loading', error: undefined });
 
@@ -103,7 +124,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
       const event = await getEventById(eventId);
 
       if (event) {
-        console.log('✅ Evento obtenido exitosamente:', event);
+        logger.log('✅ Evento obtenido exitosamente:', event);
         set({
           currentEvent: event,
           loadingStatus: 'success',
@@ -111,7 +132,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
         });
         return true;
       } else {
-        console.log('❌ No se pudo obtener el evento');
+        logger.log('❌ No se pudo obtener el evento');
         set({
           currentEvent: undefined,
           loadingStatus: 'error',
@@ -120,7 +141,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
         return false;
       }
     } catch (error: any) {
-      console.error('❌ Error en fetchEventById:', error);
+      logger.error('❌ Error en fetchEventById:', error);
       set({
         currentEvent: undefined,
         loadingStatus: 'error',
@@ -134,17 +155,17 @@ export const useEventStore = create<EventState>()((set, get) => ({
    * Crea un nuevo evento
    */
   createNewEvent: async (eventData: CreateEventRequest) => {
-    console.log('📝 useEventStore.createNewEvent iniciado con datos:', eventData);
+    logger.log('📝 useEventStore.createNewEvent iniciado con datos:', eventData);
 
     set({ loadingStatus: 'loading', error: undefined });
 
     try {
       const newEvent = await createEvent(eventData);
 
-      console.log('🔍 Resultado de createEvent en store:', newEvent);
+      logger.log('🔍 Resultado de createEvent en store:', newEvent);
 
       if (newEvent) {
-        console.log('✅ Evento creado exitosamente en store:', newEvent);
+        logger.log('✅ Evento creado exitosamente en store:', newEvent);
 
         // Agregar el nuevo evento a la lista existente
         const currentEvents = get().events;
@@ -157,7 +178,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
 
         return newEvent;
       } else {
-        console.log('❌ No se pudo crear el evento - createEvent retornó null');
+        logger.log('❌ No se pudo crear el evento - createEvent retornó null');
         set({
           loadingStatus: 'error',
           error: 'No se pudo crear el evento - respuesta inválida del servidor'
@@ -165,7 +186,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
         return null;
       }
     } catch (error: any) {
-      console.error('❌ Error en createNewEvent store:', error);
+      logger.error('❌ Error en createNewEvent store:', error);
       set({
         loadingStatus: 'error',
         error: error.message || 'Error desconocido al crear el evento'
@@ -178,7 +199,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
    * Actualiza un evento existente
    */
   updateExistingEvent: async (eventData: UpdateEventRequest) => {
-    console.log('✏️ useEventStore.updateExistingEvent iniciado');
+    logger.log('✏️ useEventStore.updateExistingEvent iniciado');
 
     set({ loadingStatus: 'loading', error: undefined });
 
@@ -186,7 +207,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
       const updatedEvent = await updateEvent(eventData);
 
       if (updatedEvent) {
-        console.log('✅ Evento actualizado exitosamente:', updatedEvent);
+        logger.log('✅ Evento actualizado exitosamente:', updatedEvent);
 
         // Actualizar el evento en la lista
         const currentEvents = get().events;
@@ -203,7 +224,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
 
         return updatedEvent;
       } else {
-        console.log('❌ No se pudo actualizar el evento');
+        logger.log('❌ No se pudo actualizar el evento');
         set({
           loadingStatus: 'error',
           error: 'No se pudo actualizar el evento'
@@ -211,7 +232,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
         return null;
       }
     } catch (error: any) {
-      console.error('❌ Error en updateExistingEvent:', error);
+      logger.error('❌ Error en updateExistingEvent:', error);
       set({
         loadingStatus: 'error',
         error: error.message || 'Error desconocido al actualizar el evento'
@@ -224,7 +245,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
    * Elimina un evento
    */
   removeEvent: async (eventId: number) => {
-    console.log('🗑️ useEventStore.removeEvent iniciado para ID:', eventId);
+    logger.log('🗑️ useEventStore.removeEvent iniciado para ID:', eventId);
 
     set({ loadingStatus: 'loading', error: undefined });
 
@@ -232,7 +253,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
       const success = await deleteEvent(eventId);
 
       if (success) {
-        console.log('✅ Evento eliminado exitosamente');
+        logger.log('✅ Evento eliminado exitosamente');
 
         // Remover el evento de la lista
         const currentEvents = get().events;
@@ -251,7 +272,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
 
         return true;
       } else {
-        console.log('❌ No se pudo eliminar el evento');
+        logger.log('❌ No se pudo eliminar el evento');
         set({
           loadingStatus: 'error',
           error: 'No se pudo eliminar el evento'
@@ -259,7 +280,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
         return false;
       }
     } catch (error: any) {
-      console.error('❌ Error en removeEvent:', error);
+      logger.error('❌ Error en removeEvent:', error);
       set({
         loadingStatus: 'error',
         error: error.message || 'Error desconocido al eliminar el evento'
@@ -293,7 +314,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
    * Obtiene eventos por filtro específico
    */
   fetchEventsByFilter: async (filter: EventFilter, limit?: number): Promise<boolean> => {
-    console.log(`📋 Obteniendo eventos con filtro: ${filter}, limit: ${limit}`);
+    logger.log(`📋 Obteniendo eventos con filtro: ${filter}, limit: ${limit}`);
 
     set({ loadingStatus: 'loading', error: undefined });
 
@@ -301,7 +322,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
       const events = await getEvents({ filter, limit });
 
       if (events) {
-        console.log(`✅ Eventos ${filter} obtenidos exitosamente:`, events.length);
+        logger.log(`✅ Eventos ${filter} obtenidos exitosamente:`, events.length);
         set({
           events,
           loadingStatus: 'success',
@@ -309,7 +330,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
         });
         return true;
       } else {
-        console.log(`❌ No se pudieron obtener eventos ${filter}`);
+        logger.log(`❌ No se pudieron obtener eventos ${filter}`);
         set({
           loadingStatus: 'error',
           error: `No se pudieron obtener los eventos ${filter}`
@@ -317,7 +338,7 @@ export const useEventStore = create<EventState>()((set, get) => ({
         return false;
       }
     } catch (error) {
-      console.error(`❌ Error al obtener eventos ${filter}:`, error);
+      logger.error(`❌ Error al obtener eventos ${filter}:`, error);
       set({
         loadingStatus: 'error',
         error: `Error al obtener eventos ${filter}`
