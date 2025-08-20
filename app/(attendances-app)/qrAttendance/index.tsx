@@ -13,6 +13,27 @@ import {
   View
 } from 'react-native';
 
+// Logger condicional basado en el entorno
+const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
+const logger = {
+    log: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.log(...args);
+        }
+    },
+    warn: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.warn(...args);
+        }
+    },
+    error: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.error(...args);
+        }
+        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
+    }
+};
+
 // const { width, height } = Dimensions.get('window'); // Para uso futuro
 
 const QRAttendanceScreen = () => {
@@ -45,25 +66,25 @@ const QRAttendanceScreen = () => {
 
   const initializePermissions = async () => {
     try {
-      console.log('🚀 Inicializando permisos y servicios...');
+      logger.log('🚀 Inicializando permisos y servicios...');
 
       // Reiniciar el flujo de asistencia
       resetAttendanceFlow();
 
       // Solicitar permisos de cámara
-      console.log('🔐 Solicitando permisos de cámara...');
+      logger.log('🔐 Solicitando permisos de cámara...');
       const { status } = await Camera.requestCameraPermissionsAsync();
-      console.log('📱 Estado de permisos de cámara:', status);
+      logger.log('📱 Estado de permisos de cámara:', status);
 
       setHasPermission(status === 'granted');
 
       if (status === 'granted') {
         // Si la cámara fue autorizada, solicitar permisos de ubicación
-        console.log('📍 Solicitando permisos de ubicación...');
+        logger.log('📍 Solicitando permisos de ubicación...');
         const locationGranted = await requestLocationPermission();
 
         if (locationGranted) {
-          console.log('📍 Obteniendo ubicación inicial...');
+          logger.log('📍 Obteniendo ubicación inicial...');
           await getCurrentLocation();
         }
       } else {
@@ -73,13 +94,13 @@ const QRAttendanceScreen = () => {
           [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Configuración', onPress: () => {
-              console.log('Abrir configuración de permisos');
+              logger.log('Abrir configuración de permisos');
             }}
           ]
         );
       }
     } catch (error) {
-      console.error('❌ Error al inicializar permisos:', error);
+      logger.error('❌ Error al inicializar permisos:', error);
       Alert.alert('Error', 'No se pudieron inicializar los permisos necesarios');
     } finally {
       setIsLoading(false);
@@ -89,7 +110,7 @@ const QRAttendanceScreen = () => {
   // Función que se ejecuta cuando se escanea un código QR
   const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
     setScanned(true);
-    console.log('📱 Código QR escaneado:', { type, data });
+    logger.log('📱 Código QR escaneado:', { type, data });
 
     // Sanitizar y validar el código QR
     const cleanQRCode = sanitizeQRCode(data);
@@ -154,7 +175,7 @@ const QRAttendanceScreen = () => {
   // Función para manejar el registro de asistencia
   const handleAttendanceRegistration = async (qrData: string) => {
     try {
-      console.log('📝 Iniciando registro de asistencia con QR:', qrData);
+      logger.log('📝 Iniciando registro de asistencia con QR:', qrData);
 
       // Establecer el QR code en el store
       setScannedQRCode(qrData);
@@ -265,7 +286,7 @@ const QRAttendanceScreen = () => {
         Alert.alert(alertTitle, errorMessage, alertButtons);
       }
     } catch (error) {
-      console.error('❌ Error inesperado al registrar asistencia:', error);
+      logger.error('❌ Error inesperado al registrar asistencia:', error);
       Alert.alert(
         'Error Inesperado',
         'Ocurrió un error inesperado. Por favor, intenta nuevamente.',

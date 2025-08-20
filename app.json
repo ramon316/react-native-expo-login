@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "quick-check2",
+    "name": "Asistencias Sección 8",
     "slug": "quick-check2",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,7 +16,11 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "package": "com.rmarquez316.quickcheck2"
     },
     "web": {
       "bundler": "metro",
@@ -34,11 +38,16 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store",
-      "expo-barcode-scanner"
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c71f5b7e-864f-4867-9759-650dc78a6405"
+      }
     }
   }
 }

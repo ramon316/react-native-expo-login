@@ -1,13 +1,34 @@
 /* Acciones para el manejo de asistencias */
 
 import { attendancesApi } from "@/core/auth/api/attendancesApi";
-import { 
-  AttendanceRequest, 
-  AttendanceResponse, 
+import {
   AttendanceErrorResponse,
   AttendanceHistory,
+  AttendanceRequest,
+  AttendanceResponse,
   AttendanceStats
 } from "../interface/attendance";
+
+// Logger condicional basado en el entorno
+const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
+const logger = {
+    log: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.log(...args);
+        }
+    },
+    warn: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.warn(...args);
+        }
+    },
+    error: (...args: any[]) => {
+        if (STAGE === 'dev') {
+            console.error(...args);
+        }
+        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
+    }
+};
 
 /**
  * Registra la asistencia del usuario enviando QR code y ubicación
@@ -18,7 +39,7 @@ export const submitAttendance = async (
   attendanceData: AttendanceRequest
 ): Promise<AttendanceResponse | null> => {
   try {
-    console.log('📝 Registrando asistencia:', {
+    logger.log('📝 Registrando asistencia:', {
       qr_code: attendanceData.qr_code,
       latitude: attendanceData.user_latitude.toFixed(6),
       longitude: attendanceData.user_longitude.toFixed(6)
@@ -26,17 +47,17 @@ export const submitAttendance = async (
 
     // Validar datos antes de enviar
     if (!attendanceData.qr_code || attendanceData.qr_code.trim() === '') {
-      console.error('❌ QR code vacío o inválido');
+      logger.error('❌ QR code vacío o inválido');
       return null;
     }
 
     if (!isValidLatitude(attendanceData.user_latitude)) {
-      console.error('❌ Latitud inválida:', attendanceData.user_latitude);
+      logger.error('❌ Latitud inválida:', attendanceData.user_latitude);
       return null;
     }
 
     if (!isValidLongitude(attendanceData.user_longitude)) {
-      console.error('❌ Longitud inválida:', attendanceData.user_longitude);
+      logger.error('❌ Longitud inválida:', attendanceData.user_longitude);
       return null;
     }
 
@@ -47,11 +68,11 @@ export const submitAttendance = async (
       user_longitude: attendanceData.user_longitude
     });
 
-    console.log('📦 Respuesta completa de submitAttendance:', data);
+    logger.log('📦 Respuesta completa de submitAttendance:', data);
 
     // Verificar si la respuesta es exitosa
     if (data.success && data.attendance) {
-      console.log('✅ Asistencia registrada exitosamente:', {
+      logger.log('✅ Asistencia registrada exitosamente:', {
         attendanceId: data.attendance.id,
         eventName: data.attendance.event?.name,
         distance: data.distance,
@@ -60,44 +81,44 @@ export const submitAttendance = async (
       return data;
     }
 
-    console.log('❌ Error en la respuesta de la API:', data.message);
+    logger.log('❌ Error en la respuesta de la API:', data.message);
     return null;
 
   } catch (error: any) {
-    console.error('❌ Error al registrar asistencia:', error);
+    logger.error('❌ Error al registrar asistencia:', error);
 
     // Manejo específico de errores
     if (error.response?.data) {
       const errorData = error.response.data as AttendanceErrorResponse;
-      console.error('📝 Mensaje del servidor:', errorData.message);
-      
+      logger.error('📝 Mensaje del servidor:', errorData.message);
+
       if (errorData.errors) {
-        console.error('📋 Errores de validación:', errorData.errors);
-        
+        logger.error('📋 Errores de validación:', errorData.errors);
+
         // Log específico para cada tipo de error
         if (errorData.errors.qr_code) {
-          console.error('🔍 Error QR Code:', errorData.errors.qr_code);
+          logger.error('🔍 Error QR Code:', errorData.errors.qr_code);
         }
         if (errorData.errors.user_latitude) {
-          console.error('📍 Error Latitud:', errorData.errors.user_latitude);
+          logger.error('📍 Error Latitud:', errorData.errors.user_latitude);
         }
         if (errorData.errors.user_longitude) {
-          console.error('📍 Error Longitud:', errorData.errors.user_longitude);
+          logger.error('📍 Error Longitud:', errorData.errors.user_longitude);
         }
       }
     }
 
     // Errores de red específicos
     if (error.response?.status === 422) {
-      console.error('🚨 ERROR 422: Datos de validación incorrectos');
+      logger.error('🚨 ERROR 422: Datos de validación incorrectos');
     } else if (error.response?.status === 404) {
-      console.error('🚨 ERROR 404: QR code no encontrado o evento inválido');
+      logger.error('🚨 ERROR 404: QR code no encontrado o evento inválido');
     } else if (error.response?.status === 401) {
-      console.error('🚨 ERROR 401: No autorizado - Token inválido');
+      logger.error('🚨 ERROR 401: No autorizado - Token inválido');
     } else if (error.response?.status === 409) {
-      console.error('🚨 ERROR 409: Asistencia ya registrada');
+      logger.error('🚨 ERROR 409: Asistencia ya registrada');
     } else if (error.code === 'NETWORK_ERROR') {
-      console.error('🚨 ERROR DE RED: No se puede conectar al servidor');
+      logger.error('🚨 ERROR DE RED: No se puede conectar al servidor');
     }
 
     return null;
@@ -111,14 +132,14 @@ export const submitAttendance = async (
  */
 export const getAttendanceHistory = async (page: number = 1): Promise<AttendanceHistory | null> => {
   try {
-    console.log('📋 Obteniendo historial de asistencias, página:', page);
+    logger.log('📋 Obteniendo historial de asistencias, página:', page);
 
     const { data } = await attendancesApi.get(`/attendances?page=${page}`);
 
-    console.log('📦 Respuesta de historial:', data);
+    logger.log('📦 Respuesta de historial:', data);
 
     if (data.success && data.attendances) {
-      console.log('✅ Historial obtenido exitosamente:', data.attendances.length, 'registros');
+      logger.log('✅ Historial obtenido exitosamente:', data.attendances.length, 'registros');
       return {
         attendances: data.attendances,
         total: data.total || data.attendances.length,
@@ -130,7 +151,7 @@ export const getAttendanceHistory = async (page: number = 1): Promise<Attendance
     return null;
 
   } catch (error: any) {
-    console.error('❌ Error al obtener historial de asistencias:', error);
+    logger.error('❌ Error al obtener historial de asistencias:', error);
     return null;
   }
 };
@@ -141,21 +162,21 @@ export const getAttendanceHistory = async (page: number = 1): Promise<Attendance
  */
 export const getAttendanceStats = async (): Promise<AttendanceStats | null> => {
   try {
-    console.log('📊 Obteniendo estadísticas de asistencia...');
+    logger.log('📊 Obteniendo estadísticas de asistencia...');
 
     const { data } = await attendancesApi.get('/attendances/stats');
 
-    console.log('📦 Respuesta de estadísticas:', data);
+    logger.log('📦 Respuesta de estadísticas:', data);
 
     if (data.success && data.stats) {
-      console.log('✅ Estadísticas obtenidas exitosamente');
+      logger.log('✅ Estadísticas obtenidas exitosamente');
       return data.stats;
     }
 
     return null;
 
   } catch (error: any) {
-    console.error('❌ Error al obtener estadísticas:', error);
+    logger.error('❌ Error al obtener estadísticas:', error);
     return null;
   }
 };
