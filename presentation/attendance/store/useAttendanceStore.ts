@@ -207,7 +207,8 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
 
       const result = await submitAttendance(attendanceData);
       
-      if (result) {
+      // Verificar si el resultado es válido
+      if (result && result.attendance) {
         logger.log('✅ Asistencia registrada exitosamente');
         set({
           currentAttendance: result.attendance,
@@ -217,19 +218,22 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
         });
         return result.attendance;
       } else {
-        logger.log('❌ Error al registrar asistencia');
+        // Si result es null pero no hubo excepción, es un error inesperado
+        logger.error('❌ Resultado inesperado: result es null sin excepción');
         set({
           isSubmittingAttendance: false,
           status: 'error',
           error: {
             type: 'network',
-            message: 'No se pudo registrar la asistencia'
+            message: 'Error inesperado en la respuesta del servidor'
           }
         });
         return null;
       }
     } catch (error: any) {
-      logger.error('❌ Error inesperado al registrar asistencia:', error);
+      logger.error('❌ Error capturado en store:', error);
+      logger.error('📊 Status del error:', error.response?.status);
+      logger.error('📄 Data del error:', error.response?.data);
 
       // Extraer mensaje específico del error de la API
       let errorMessage = 'Error inesperado al registrar asistencia';
@@ -237,8 +241,13 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
 
       if (error.response?.data) {
         const apiError = error.response.data;
+        logger.log('🔍 Procesando error de API:', {
+          status: error.response.status,
+          message: apiError.message,
+          errors: apiError.errors
+        });
 
-        // Manejar errores específicos de la API
+        // Manejar errores específicos de la API según tus códigos
         if (error.response.status === 422) {
           // Error de validación
           if (apiError.message) {
@@ -249,29 +258,21 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
             errorMessage = validationErrors.join('. ');
           }
           errorType = 'validation';
+        } else if (error.response.status === 403) {
+          // Evento no activo
+          errorMessage = apiError.message || 'Este evento no está activo o ya ha finalizado';
+          errorType = 'event_inactive';
+        } else if (error.response.status === 405) {
+          // Usuario ya registró asistencia
+          errorMessage = apiError.message || 'Ya tienes registrada tu asistencia para este evento';
+          errorType = 'already_registered';
+        } else if (error.response.status === 400) {
+          // Usuario demasiado lejos
+          errorMessage = apiError.message || 'Te encuentras fuera del área permitida para registrar asistencia. Acércate más al lugar del evento.';
+          errorType = 'out_of_range';
         } else if (error.response.status === 404) {
           errorMessage = 'El código QR no es válido o el evento no existe';
           errorType = 'invalid_qr';
-        } else if (error.response.status === 409) {
-          errorMessage = 'Ya tienes registrada tu asistencia para este evento';
-          errorType = 'already_registered';
-        } else if (error.response.status === 403) {
-          errorMessage = 'No tienes permisos para registrar asistencia en este evento';
-          errorType = 'forbidden';
-        } else if (error.response.status === 400) {
-          // Errores específicos del negocio
-          if (apiError.message?.includes('fuera del rango')) {
-            errorMessage = 'Te encuentras fuera del área permitida para registrar asistencia. Acércate más al lugar del evento.';
-            errorType = 'out_of_range';
-          } else if (apiError.message?.includes('evento no activo') || apiError.message?.includes('evento ha finalizado')) {
-            errorMessage = 'Este evento no está activo o ya ha finalizado';
-            errorType = 'event_inactive';
-          } else if (apiError.message?.includes('evento no ha comenzado')) {
-            errorMessage = 'Este evento aún no ha comenzado. Espera a la hora de inicio.';
-            errorType = 'event_not_started';
-          } else {
-            errorMessage = apiError.message || errorMessage;
-          }
         } else if (apiError.message) {
           errorMessage = apiError.message;
         }
@@ -283,14 +284,18 @@ export const useAttendanceStore = create<AttendanceState>()((set, get) => ({
         errorType = 'unauthorized';
       }
 
+      const finalError = {
+        type: errorType,
+        message: errorMessage,
+        details: error
+      };
+
+      logger.log('💾 Error guardado en store:', finalError);
+
       set({
         isSubmittingAttendance: false,
         status: 'error',
-        error: {
-          type: errorType,
-          message: errorMessage,
-          details: error
-        }
+        error: finalError
       });
       return null;
     }

@@ -4,13 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Camera, CameraView } from 'expo-camera';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 import { appLogger as logger } from '@/helpers/logger/appLogger';
@@ -183,8 +183,18 @@ const QRAttendanceScreen = () => {
           ]
         );
       } else {
+        // Obtener el error del store
+        const storeError = useAttendanceStore.getState().error;
+
+        // Log para debugging
+        logger.log('🔍 Error obtenido del store:', {
+          type: storeError?.type,
+          message: storeError?.message,
+          hasError: !!storeError
+        });
+
         // Mostrar error específico según el tipo
-        const errorMessage = error?.message || 'No se pudo registrar la asistencia. Intenta nuevamente.';
+        const errorMessage = storeError?.message || 'No se pudo registrar la asistencia. Intenta nuevamente.';
         let alertTitle = '❌ Error al Registrar';
         let alertButtons = [
           {
@@ -201,7 +211,7 @@ const QRAttendanceScreen = () => {
         ];
 
         // Personalizar título y botones según el tipo de error
-        switch (error?.type) {
+        switch (storeError?.type) {
           case 'already_registered':
             alertTitle = '✅ Ya Registrado';
             alertButtons = [
@@ -261,6 +271,18 @@ const QRAttendanceScreen = () => {
             break;
           case 'network':
             alertTitle = '🌐 Error de Conexión';
+            break;
+          case 'forbidden':
+            alertTitle = '🚫 Sin Permisos';
+            break;
+          case 'validation':
+            alertTitle = '⚠️ Error de Validación';
+            break;
+          case 'location':
+            alertTitle = '📍 Error de Ubicación';
+            break;
+          case 'permission':
+            alertTitle = '🔐 Permisos Requeridos';
             break;
         }
 

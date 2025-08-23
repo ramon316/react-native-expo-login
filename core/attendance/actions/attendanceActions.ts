@@ -3,11 +3,11 @@
 import { attendancesApi } from "@/core/auth/api/attendancesApi";
 import { appLogger as logger } from "@/helpers/logger/appLogger";
 import {
-  AttendanceErrorResponse,
-  AttendanceHistory,
-  AttendanceRequest,
-  AttendanceResponse,
-  AttendanceStats
+    AttendanceErrorResponse,
+    AttendanceHistory,
+    AttendanceRequest,
+    AttendanceResponse,
+    AttendanceStats
 } from "../interface/attendance";
 
 /**
@@ -101,7 +101,8 @@ export const submitAttendance = async (
       logger.error('🚨 ERROR DE RED: No se puede conectar al servidor');
     }
 
-    return null;
+    // Re-lanzar el error para que el store lo pueda capturar
+    throw error;
   }
 };
 
