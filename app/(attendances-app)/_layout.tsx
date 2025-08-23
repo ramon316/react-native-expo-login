@@ -1,9 +1,10 @@
+import { appLogger as logger } from '@/helpers/logger/appLogger';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import { Redirect } from 'expo-router';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
 
 /* Drawer */
+import { Redirect } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -32,9 +33,9 @@ const CheckAuthenticationLayout = () => {
           onPress: async () => {
             try {
               await logout();
-              console.log('✅ Logout exitoso');
+              logger.log('✅ Logout exitoso');
             } catch (error) {
-              console.error('❌ Error en logout:', error);
+              logger.error('❌ Error en logout:', error);
             }
           },
         },
@@ -53,7 +54,8 @@ const CheckAuthenticationLayout = () => {
 
   if (status === 'unauthenticated') {
     //TODO: guardar la ruta del usuario, keyValuePear storage retornar a la pantalla despues del login
-    return <Redirect href='/auth/login' />
+    return <Redirect href="/auth/login" />
+    /* return <Redirect href="/test" /> */
   }
 
   return (

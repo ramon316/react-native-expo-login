@@ -4,35 +4,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Camera, CameraView } from 'expo-camera';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
-// Logger condicional basado en el entorno
-const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
-const logger = {
-    log: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.log(...args);
-        }
-    },
-    warn: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.warn(...args);
-        }
-    },
-    error: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.error(...args);
-        }
-        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
-    }
-};
+import { appLogger as logger } from '@/helpers/logger/appLogger';
 
 // const { width, height } = Dimensions.get('window'); // Para uso futuro
 

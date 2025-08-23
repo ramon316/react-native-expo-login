@@ -9,9 +9,10 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    ```bash
    npm install
    ```
-1.5 Clonar .env.template a .env y cambiar la dirección ip
 
-2. Start the app
+2. Configure API URL in `app.config.js` if needed (default: https://seccion8.org/api)
+
+3. Start the app
 
    ```bash
    npx expo start

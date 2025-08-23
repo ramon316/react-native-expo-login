@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Asistencias Sección 8",
+    "name": "Asistencia Seccion 8",
     "slug": "quick-check2",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,12 +9,22 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+        ],
+        "usesCleartextTraffic": true
       },
       "edgeToEdgeEnabled": true,
       "permissions": [

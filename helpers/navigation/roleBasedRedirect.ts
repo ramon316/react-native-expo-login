@@ -1,5 +1,6 @@
-import { router } from 'expo-router';
 import { User } from '@/core/auth/interface/user';
+import { appLogger as logger } from '@/helpers/logger/appLogger';
+import { router } from 'expo-router';
 
 /**
  * Redirige al usuario a la pantalla apropiada basada en su rol
@@ -7,22 +8,22 @@ import { User } from '@/core/auth/interface/user';
  */
 export const redirectBasedOnRole = (user: User | undefined) => {
   if (!user) {
-    console.log('❌ No hay usuario para redireccionar');
+    logger.log('❌ No hay usuario para redireccionar');
     return;
   }
 
-  console.log('👤 Usuario:', user.name);
-  console.log('🔑 Rol del usuario:', user.role);
+  logger.log('👤 Usuario:', user.name);
+  logger.log('🔑 Rol del usuario:', user.role);
 
   switch (user.role) {
     case 'admin':
-      console.log('🔄 Redirigiendo a admin dashboard...');
+      logger.log('🔄 Redirigiendo a admin dashboard...');
       router.replace('/(admin-app)/(dashboard)');
       break;
-    
+
     case 'user':
     default:
-      console.log('🔄 Redirigiendo a home de usuario...');
+      logger.log('🔄 Redirigiendo a home de usuario...');
       router.replace('/(attendances-app)/(home)');
       break;
   }

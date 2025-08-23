@@ -1,3 +1,4 @@
+import { appLogger as logger } from '@/helpers/logger/appLogger';
 import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,27 +16,6 @@ import {
   useWindowDimensions,
   View
 } from 'react-native';
-
-// Logger condicional basado en el entorno
-const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
-const logger = {
-    log: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.log(...args);
-        }
-    },
-    warn: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.warn(...args);
-        }
-    },
-    error: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.error(...args);
-        }
-        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
-    }
-};
 
 const LoginScreen = () => {
   // Referencias para el ScrollView
@@ -267,6 +247,9 @@ const LoginScreen = () => {
           <View className="items-center mt-6">
             <Text className="text-gray-400 text-xs text-center">
               ¿Problemas para ingresar? Contacte al administrador
+            </Text>
+            <Text className="text-gray-400 text-xs text-center">
+              Asistencias Sección VIII Versión 1.0.0 © 2025
             </Text>
           </View>
         </View>

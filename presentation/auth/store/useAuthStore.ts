@@ -2,29 +2,9 @@
 import { authCheckStatus, authLogin, authRegister } from "@/core/auth/actions/authActions";
 import { isUserActive, User } from "@/core/auth/interface/user";
 import { SecureStorageAdapter } from "@/helpers/adapters/secure-storage.adapter";
+import { appLogger as logger } from "@/helpers/logger/appLogger";
 /* Zuztand */
 import { create } from "zustand";
-
-// Logger condicional basado en el entorno
-const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
-const logger = {
-    log: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.log(...args);
-        }
-    },
-    warn: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.warn(...args);
-        }
-    },
-    error: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.error(...args);
-        }
-        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
-    }
-};
 
 /* Estos son los estado de autenticación */
 export type AuthStatus = 'authenticated' | 'unauthenticated' | 'checking';

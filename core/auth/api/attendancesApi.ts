@@ -1,59 +1,28 @@
 import { SecureStorageAdapter } from '@/helpers/adapters/secure-storage.adapter';
+import { getAppStage, appLogger as logger } from '@/helpers/logger/appLogger';
 import axios from 'axios';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-//TODO: concetar mediante env vars. Andoid and IOS
-const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
-
-// Logger condicional basado en el entorno
-const logger = {
-    log: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.log(...args);
-        }
-    },
-    warn: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.warn(...args);
-        }
-    },
-    error: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.error(...args);
-        }
-        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
-    }
-};
-
-/* Verificamos en que sistema estamos para tomar el api correcto */
-export const API_URL =
-(STAGE === 'prod')
-    ? process.env.EXPO_PUBLIC_API_URL
-    :(Platform.OS === 'android') 
-        ? process.env.EXPO_PUBLIC_API_URL_ANDROID
-        : process.env.EXPO_PUBLIC_API_URL_IOS;
+/* Obtenemos la URL de la API desde app.config.js */
+export const API_URL = Constants.expoConfig?.extra?.apiUrl || null;
 
 // Validación de URL
 if (!API_URL) {
-    logger.error('❌ ERROR: No se encontró URL de API para la plataforma:', Platform.OS);
-    logger.error('📋 Variables disponibles:', {
-        STAGE,
-        EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
-        EXPO_PUBLIC_API_URL_ANDROID: process.env.EXPO_PUBLIC_API_URL_ANDROID,
-        EXPO_PUBLIC_API_URL_IOS: process.env.EXPO_PUBLIC_API_URL_IOS,
+    logger.error('❌ ERROR: No se encontró URL de API en app.config.js');
+    logger.error('📋 Configuración disponible:', {
+        stage: getAppStage(),
+        expoConfig: Constants.expoConfig?.extra || 'No disponible',
+        Platform: Platform.OS,
     });
 }
 
 // Logging detallado
-logger.log('🔧 Configuración de API:');
+logger.log('🔧 Configuración de API desde app.config.js:');
 logger.log('📱 Plataforma:', Platform.OS);
-logger.log('🌍 Entorno:', STAGE);
+logger.log('🌍 Entorno (stage):', getAppStage());
 logger.log('🌐 URL de API:', API_URL);
-logger.log('📋 Variables de entorno cargadas:', {
-    STAGE,
-    API_URL_ANDROID: process.env.EXPO_PUBLIC_API_URL_ANDROID,
-    API_URL_IOS: process.env.EXPO_PUBLIC_API_URL_IOS,
-});
+logger.log('📋 Configuración extra completa:', Constants.expoConfig?.extra || 'No disponible');
 
 const attendancesApi = axios.create({
     baseURL: API_URL,

@@ -9,7 +9,17 @@ const RootLayout = () => {
       screenOptions={{
         headerShown: false,
       }}
-    />
+    >
+      {/* Pantalla de test accesible sin autenticación */}
+      {/* <Stack.Screen
+        name="test/index"
+        options={{
+          headerShown: true,
+          title: "🔧 Test API",
+          presentation: "modal"
+        }}
+      /> */}
+    </Stack>
   )
 }
 

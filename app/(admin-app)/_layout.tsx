@@ -1,3 +1,4 @@
+import { appLogger as logger } from '@/helpers/logger/appLogger';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Redirect } from 'expo-router';
 import React, { useEffect } from 'react';
@@ -32,9 +33,9 @@ const CheckAuthenticationLayout = () => {
           onPress: async () => {
             try {
               await logout();
-              console.log('✅ Logout exitoso');
+              logger.log('✅ Logout exitoso');
             } catch (error) {
-              console.error('❌ Error en logout:', error);
+              logger.error('❌ Error en logout:', error);
             }
           },
         },
@@ -54,6 +55,7 @@ const CheckAuthenticationLayout = () => {
   if (status === 'unauthenticated') {
     //TODO: guardar la ruta del usuario, keyValuePear storage retornar a la pantalla despues del login
     return <Redirect href='/auth/login' />
+    /* return <Redirect href="/test" /> */
   }
 
   return (

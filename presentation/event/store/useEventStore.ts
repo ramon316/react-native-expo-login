@@ -1,37 +1,18 @@
 /* Manejo de eventos y información respectiva */
 import {
-  createEvent,
-  deleteEvent,
-  getAllEvents,
-  getEventById,
-  getEvents,
-  updateEvent,
-  type EventFilter
+    createEvent,
+    deleteEvent,
+    getAllEvents,
+    getEventById,
+    getEvents,
+    updateEvent,
+    type EventFilter
 } from "@/core/event/actions/eventActions";
 import { CreateEventRequest, Event, UpdateEventRequest } from "@/core/event/interface/event";
 /* Zustand */
 import { create } from "zustand";
 
-// Logger condicional basado en el entorno
-const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
-const logger = {
-    log: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.log(...args);
-        }
-    },
-    warn: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.warn(...args);
-        }
-    },
-    error: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.error(...args);
-        }
-        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
-    }
-};
+import { appLogger as logger } from '@/helpers/logger/appLogger';
 
 /* Estados de carga para eventos */
 export type EventLoadingStatus = 'idle' | 'loading' | 'success' | 'error';

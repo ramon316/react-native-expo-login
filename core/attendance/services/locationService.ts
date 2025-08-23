@@ -1,8 +1,9 @@
 /* Servicio para manejo de geolocalización */
 
+import { appLogger as logger } from '@/helpers/logger/appLogger';
 import * as ExpoLocation from 'expo-location';
 import { Alert } from 'react-native';
-import { UserLocation, LocationConfig, AttendanceError } from '../interface/attendance';
+import { AttendanceError, LocationConfig, UserLocation } from '../interface/attendance';
 
 /**
  * Configuraciones predefinidas para diferentes niveles de precisión
@@ -35,15 +36,15 @@ export class LocationService {
    */
   static async requestLocationPermissions(): Promise<{ granted: boolean; error?: AttendanceError }> {
     try {
-      console.log('📍 Solicitando permisos de ubicación...');
-      
+      logger.log('📍 Solicitando permisos de ubicación...');
+
       const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
-      
+
       if (status === 'granted') {
-        console.log('✅ Permisos de ubicación concedidos');
+        logger.log('✅ Permisos de ubicación concedidos');
         return { granted: true };
       } else {
-        console.log('❌ Permisos de ubicación denegados:', status);
+        logger.log('❌ Permisos de ubicación denegados:', status);
         return {
           granted: false,
           error: {
@@ -54,7 +55,7 @@ export class LocationService {
         };
       }
     } catch (error) {
-      console.error('❌ Error al solicitar permisos de ubicación:', error);
+      logger.error('❌ Error al solicitar permisos de ubicación:', error);
       return {
         granted: false,
         error: {
@@ -74,7 +75,7 @@ export class LocationService {
       const { status } = await ExpoLocation.getForegroundPermissionsAsync();
       return status === 'granted';
     } catch (error) {
-      console.error('❌ Error al verificar permisos:', error);
+      logger.error('❌ Error al verificar permisos:', error);
       return false;
     }
   }
@@ -84,7 +85,7 @@ export class LocationService {
    */
   static async getCurrentLocation(config: LocationConfig = LOCATION_CONFIGS.high): Promise<{ location?: UserLocation; error?: AttendanceError }> {
     try {
-      console.log('📍 Obteniendo ubicación actual con configuración:', config);
+      logger.log('📍 Obteniendo ubicación actual con configuración:', config);
 
       // Verificar permisos primero
       const hasPermissions = await this.checkLocationPermissions();
@@ -102,7 +103,7 @@ export class LocationService {
         distanceInterval: 1,
       };
 
-      console.log('🎯 Opciones de ubicación:', locationOptions);
+      logger.log('🎯 Opciones de ubicación:', locationOptions);
 
       // Obtener ubicación con timeout
       const locationPromise = ExpoLocation.getCurrentPositionAsync(locationOptions);
@@ -119,7 +120,7 @@ export class LocationService {
         timestamp: location.timestamp,
       };
 
-      console.log('✅ Ubicación obtenida exitosamente:', {
+      logger.log('✅ Ubicación obtenida exitosamente:', {
         lat: userLocation.latitude.toFixed(6),
         lng: userLocation.longitude.toFixed(6),
         accuracy: userLocation.accuracy
@@ -128,7 +129,7 @@ export class LocationService {
       return { location: userLocation };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener ubicación:', error);
+      logger.error('❌ Error al obtener ubicación:', error);
 
       let errorMessage = 'No se pudo obtener la ubicación';
       let errorType: AttendanceError['type'] = 'location';

@@ -1,4 +1,5 @@
 import { validateMatricula } from '@/core/auth/actions/authActions';
+import { appLogger as logger } from '@/helpers/logger/appLogger';
 import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,27 +18,6 @@ import {
   View
 } from 'react-native';
 import CustomCheckbox from './components/CustomCheckbox';
-
-// Logger condicional basado en el entorno
-const STAGE = process.env.EXPO_PUBLIC_STAGE || 'dev';
-const logger = {
-    log: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.log(...args);
-        }
-    },
-    warn: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.warn(...args);
-        }
-    },
-    error: (...args: any[]) => {
-        if (STAGE === 'dev') {
-            console.error(...args);
-        }
-        // En producción, aquí podrías enviar errores críticos a un servicio de monitoreo
-    }
-};
 
 const RegisterScreen = () => {
   // Referencias para el ScrollView y campos
