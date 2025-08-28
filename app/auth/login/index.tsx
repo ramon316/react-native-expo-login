@@ -246,8 +246,9 @@ const LoginScreen = () => {
           {/* Texto de ayuda */}
           <View className="items-center mt-6">
             <Text className="text-gray-400 text-xs text-center">
-              ¿Problemas para ingresar? Contacte al administrador
+              ¿Problemas para ingresar?
             </Text>
+            <Link className='text-blue-600 text-xs text-center' href="mailto:nexusolutionsmg@gmail.com?subject=Problema%20de%20ingreso">Contacte al administrador</Link>
             <Text className="text-gray-400 text-xs text-center">
               Asistencias Sección VIII Versión 1.0.0 © 2025
             </Text>

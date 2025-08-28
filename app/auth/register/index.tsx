@@ -81,7 +81,7 @@ const RegisterScreen = () => {
 
   const validatePassword = (password: string) => {
     if (!password) return 'La contraseña es requerida';
-    if (password.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+    if (password.length < 8) return 'La contraseña debe tener al menos 6 caracteres';
     if (!/(?=.*[a-z])(?=.*[A-Z])/.test(password)) return 'Debe contener al menos una mayúscula y una minúscula';
     if (!/(?=.*\d)/.test(password)) return 'Debe contener al menos un número';
     return '';
@@ -275,14 +275,14 @@ const RegisterScreen = () => {
   // Verificar si el formulario es válido
   const isFormValid = () => {
     return name.trim() &&
-           employeeId.trim() &&
-           email.trim() &&
-           password &&
-           confirmPassword &&
-           matriculaValidated === true && // Matrícula debe estar validada
-           acceptedPrivacy && // Debe aceptar aviso de privacidad
-           acceptedLocation && // Debe autorizar uso de ubicación
-           Object.values(errors).every(error => error === '');
+      employeeId.trim() &&
+      email.trim() &&
+      password &&
+      confirmPassword &&
+      matriculaValidated === true && // Matrícula debe estar validada
+      acceptedPrivacy && // Debe aceptar aviso de privacidad
+      acceptedLocation && // Debe autorizar uso de ubicación
+      Object.values(errors).every(error => error === '');
   };
 
   return (
@@ -324,9 +324,8 @@ const RegisterScreen = () => {
               Nombre completo
             </Text>
             <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.name ? 'border-red-500' : 'border-gray-200'
-              }`}
+              className={`px-4 py-4 border rounded-lg text-base ${errors.name ? 'border-red-500' : 'border-gray-200'
+                }`}
               placeholder="Nombre completo iniciando por apellidos"
               placeholderTextColor="#9CA3AF"
               value={name}
@@ -351,12 +350,11 @@ const RegisterScreen = () => {
             </Text>
             <View className="relative">
               <TextInput
-                className={`px-4 py-4 pr-12 border rounded-lg text-base ${
-                  errors.employeeId ? 'border-red-500' :
-                  matriculaValidated === true ? 'border-green-500' :
-                  matriculaValidated === false ? 'border-orange-500' :
-                  'border-gray-200'
-                }`}
+                className={`px-4 py-4 pr-12 border rounded-lg text-base ${errors.employeeId ? 'border-red-500' :
+                    matriculaValidated === true ? 'border-green-500' :
+                      matriculaValidated === false ? 'border-orange-500' :
+                        'border-gray-200'
+                  }`}
                 placeholder="Ingrese su matrícula"
                 placeholderTextColor="#9CA3AF"
                 value={employeeId}
@@ -407,9 +405,8 @@ const RegisterScreen = () => {
               Email
             </Text>
             <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.email ? 'border-red-500' : 'border-gray-200'
-              }`}
+              className={`px-4 py-4 border rounded-lg text-base ${errors.email ? 'border-red-500' : 'border-gray-200'
+                }`}
               placeholder="Ingrese su email"
               placeholderTextColor="#9CA3AF"
               value={email}
@@ -435,9 +432,8 @@ const RegisterScreen = () => {
             </Text>
             <View className="relative">
               <TextInput
-                className={`px-4 py-4 pr-12 border rounded-lg text-base ${
-                  errors.password ? 'border-red-500' : 'border-gray-200'
-                }`}
+                className={`px-4 py-4 pr-12 border rounded-lg text-base ${errors.password ? 'border-red-500' : 'border-gray-200'
+                  }`}
                 placeholder="Ingrese su contraseña"
                 placeholderTextColor="#9CA3AF"
                 value={password}
@@ -479,9 +475,8 @@ const RegisterScreen = () => {
             </Text>
             <View className="relative">
               <TextInput
-                className={`px-4 py-4 pr-12 border rounded-lg text-base ${
-                  errors.confirmPassword ? 'border-red-500' : 'border-gray-200'
-                }`}
+                className={`px-4 py-4 pr-12 border rounded-lg text-base ${errors.confirmPassword ? 'border-red-500' : 'border-gray-200'
+                  }`}
                 placeholder="Confirme su contraseña"
                 placeholderTextColor="#9CA3AF"
                 value={confirmPassword}
@@ -529,6 +524,9 @@ const RegisterScreen = () => {
                   description="Es necesario aceptar para continuar con el registro"
                   required={true}
                 />
+                <Link href="https://seccion8.org/privacy" className="text-blue-600 text-xs text-left ml-8">
+                  Leer aviso de privacidad
+                </Link>
               </View>
 
               {/* Checkbox Autorización de Ubicación */}
@@ -547,11 +545,10 @@ const RegisterScreen = () => {
 
           {/* Botón de Registro */}
           <TouchableOpacity
-            className={`py-4 rounded-lg mb-4 ${
-              isLoading || !isFormValid()
+            className={`py-4 rounded-lg mb-4 ${isLoading || !isFormValid()
                 ? 'bg-gray-300'
                 : 'bg-blue-600'
-            }`}
+              }`}
             onPress={handleRegister}
             disabled={isLoading || !isFormValid()}
           >
@@ -608,6 +605,17 @@ const RegisterScreen = () => {
             <Link href="/auth/login" className="text-blue-600 text-sm font-medium">
               Iniciar sesión
             </Link>
+          </View>
+
+          {/* Texto de ayuda */}
+          <View className="items-center mt-6">
+            <Text className="text-gray-400 text-xs text-center">
+              ¿Problemas para ingresar?
+            </Text>
+            <Link className='text-blue-600 text-xs text-center' href="mailto:nexusolutionsmg@gmail.com?subject=Problema%20de%20ingreso">Contacte al administrador</Link>
+            <Text className="text-gray-400 text-xs text-center">
+              Asistencias Sección VIII Versión 1.0.0 © 2025
+            </Text>
           </View>
 
           {/* Texto de ayuda */}

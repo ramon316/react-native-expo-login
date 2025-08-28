@@ -1,0 +1,145 @@
+[33mcommit dde2f47166a483b5df2947ff4cad5bdfdc589a16[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Sat Aug 23 14:48:10 2025 -0600
+
+    feature - message from api in error check in
+
+[33mcommit 7d6749cb04cb5500a77adfc3b3139b9f32509d1e[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Sat Aug 23 09:27:03 2025 -0600
+
+    change - env for app.config for production
+
+[33mcommit 9d901639643bfe0266d263510c5b620de5f30d7a[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Wed Aug 20 15:51:28 2025 -0600
+
+    make apk and aab
+
+[33mcommit 761dda04a7b48a74e2b5b350c9b65767f2b03905[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Mon Aug 18 15:57:52 2025 -0600
+
+    feature - change env prod and clear console.log
+
+[33mcommit 10bda52efc679bc9c457335aedb3a7aa16d5e525[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Sat Aug 16 12:33:45 2025 -0600
+
+    feature - verification employee_id with employees api
+
+[33mcommit ce45267e541a454c6d75e6fe9cf321bad00a74f2[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Fri Aug 15 15:46:08 2025 -0600
+
+    feature - add status and checking matricula in employees table
+
+[33mcommit 183648b0eb813f3d048f9707ed5d92378e9e4338[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Fri Aug 15 11:24:02 2025 -0600
+
+    feature - add stats and solver problem with token user
+
+[33mcommit ef304a9aa6afdf8f864b00ff0154865c7f59d1ca[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Thu Aug 14 15:37:56 2025 -0600
+
+    feature - user home stats and admin index
+
+[33mcommit 5371707aa40d053d9826c6ba5afd20af155f6097[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Wed Aug 6 14:36:12 2025 -0600
+
+    feature - display none other drawer route
+
+[33mcommit 79aecc86bb8566333b9c2d47af48265e6fe4c8e8[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Wed Aug 6 14:00:02 2025 -0600
+
+    feature - add attendees_count view events
+
+[33mcommit e0c04c4a1af12ff8182af0958f47540a1cc2c8ab[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Sun Aug 3 09:31:24 2025 -0600
+
+    feature - add scan user and register success
+
+[33mcommit 5b01ffaea1dd842a59a5b6f10aa4122b8e510422[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Sat Aug 2 15:15:03 2025 -0600
+
+    feature - add logout layout
+
+[33mcommit 8ec294081a2ac5bc817c0267be619542a969bfb8[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Sat Aug 2 14:45:51 2025 -0600
+
+    feature - view print pdf share add
+
+[33mcommit 4f8ac6e5e2a534e6e6c94a9f4d219f996ad66f3d[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Sat Aug 2 13:05:47 2025 -0600
+
+    bugfix - delete token in authenticated solved
+
+[33mcommit 604c22d6d792d79cb4efad9940752bd57fc3ace2[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Sat Aug 2 07:16:52 2025 -0600
+
+    feature - view id event complete and delete api
+
+[33mcommit f871eeaeded4f9f64244b89fcd4f1788a79325fc[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Fri Aug 1 13:05:16 2025 -0600
+
+    feature - index events show in forntend
+
+[33mcommit e4e20f055eaa45a09a14875817bdba7c3ca4a847[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Wed Jul 30 21:59:21 2025 -0600
+
+    feature - create event add location add api request success
+
+[33mcommit 8444e790b1a07aad28c7244906dedcdfc574f2fa[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Wed Jul 30 21:07:05 2025 -0600
+
+    feature - crete event add use datetime pickeer
+
+[33mcommit 1cdeb5e44b1bbaabbda29d70d20af34c08a8fd8d[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Tue Jul 29 12:38:15 2025 -0600
+
+    feature - admin route or user route add
+
+[33mcommit c2ece2ce2ba064c54278d6270a18347a66cb9227[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Mon Jul 28 13:55:05 2025 -0600
+
+    feature - Qr scanner
+
+[33mcommit 3377289fe568d052783f2c0d30be2f1bbccacb1e[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Wed Jul 23 12:01:12 2025 -0600
+
+    feature - Drawer qrAttendance view
+
+[33mcommit 2c727d72c56dc34ca0ef7819b186a62e17223a61[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Wed Jul 23 10:56:01 2025 -0600
+
+    feature - add register
+
+[33mcommit 68c12a648976f472bfde2d6bca39d947e9213ff1[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Tue Jul 22 14:05:22 2025 -0600
+
+    first commit and unique
+
+[33mcommit f88f3e49b019021df799661e4ea6a698a06871c3[m
+Author: Ramón Esteban Márquez García <ramon316@hotmail.com>
+Date:   Tue Jul 8 09:45:10 2025 -0600
+
+    Initial commit
+    
+    Generated by create-expo-app 3.4.2.
