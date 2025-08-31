@@ -1,3 +1,4 @@
+import PureDateTimePicker from '@/components/datetime/PureDateTimePicker';
 import { useEventStore } from '@/presentation/event/store/useEventStore';
 import { Ionicons } from '@expo/vector-icons';
 import * as ExpoLocation from 'expo-location';
@@ -15,11 +16,14 @@ import {
   useWindowDimensions,
   View
 } from 'react-native';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const CreateEventScreen = () => {
   // Referencias para el ScrollView
   const scrollViewRef = useRef<ScrollView>(null);
+
+  /* Estados para el PureDateTimePicker */
+  const [startTime, setStartTime] = useState<Date>(new Date());
+  const [endTime, setEndTime] = useState<Date | null>(null);
 
   // Store de eventos
   const { createNewEvent, loadingStatus } = useEventStore();
@@ -29,8 +33,8 @@ const CreateEventScreen = () => {
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   const [allowedRadius, setAllowedRadius] = useState('50');
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [endTime, setEndTime] = useState<Date | null>(null);
+  /*   const [startTime, setStartTime] = useState<Date | null>(null);
+    const [endTime, setEndTime] = useState<Date | null>(null); */
   // Usar el estado de carga del store
   const isLoading = loadingStatus === 'loading';
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -88,14 +92,22 @@ const CreateEventScreen = () => {
 
   const validateStartTime = (startTime: Date | null) => {
     if (!startTime) return 'La fecha y hora de inicio es requerida';
-    if (startTime < new Date()) return 'La fecha de inicio debe ser futura';
+    // Comparamos solo las fechas, ignorando la hora para la validación de fecha futura
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = new Date(startTime);
+    startDate.setHours(0, 0, 0, 0);
+    if (startDate < today) return 'La fecha de inicio debe ser futura';
     return '';
   };
 
   const validateEndTime = (endTime: Date | null, startTime: Date | null) => {
     if (!endTime) return 'La fecha y hora de fin es requerida';
     if (!startTime) return 'Debe seleccionar primero la fecha de inicio';
-    if (endTime <= startTime) return 'La fecha de fin debe ser posterior al inicio';
+    // Convertimos a timestamps para comparar fechas y horas
+    const startTimestamp = startTime.getTime();
+    const endTimestamp = endTime.getTime();
+    if (endTimestamp <= startTimestamp) return 'La fecha de fin debe ser posterior al inicio';
     return '';
   };
 
@@ -137,8 +149,8 @@ const CreateEventScreen = () => {
     const endTimeValid = validateField('endTime', endTime);
 
     return nameValid && descriptionValid && addressValid &&
-           radiusValid && startTimeValid && endTimeValid &&
-           coordinates.latitude !== null && coordinates.longitude !== null;
+      radiusValid && startTimeValid && endTimeValid &&
+      coordinates.latitude !== null && coordinates.longitude !== null;
   };
 
   // Función para obtener ubicación actual
@@ -188,8 +200,35 @@ const CreateEventScreen = () => {
 
   // Función para manejar la creación del evento
   const handleCreateEvent = async () => {
-    if (!validateForm()) {
-      Alert.alert('Error', 'Por favor corrija los errores en el formulario');
+    const nameValid = validateField('name', name);
+    const descriptionValid = validateField('description', description);
+    const addressValid = validateField('address', address);
+    const radiusValid = validateField('allowedRadius', allowedRadius);
+    const startTimeValid = validateField('startTime', startTime);
+    const endTimeValid = validateField('endTime', endTime);
+    const locationValid = coordinates.latitude !== null && coordinates.longitude !== null;
+
+    // Mostrar cuáles validaciones están fallando
+    const validations = {
+      nombre: nameValid,
+      descripción: descriptionValid,
+      dirección: addressValid,
+      radio: radiusValid,
+      'fecha inicio': startTimeValid,
+      'fecha fin': endTimeValid,
+      ubicación: locationValid
+    };
+
+    const failedValidations = Object.entries(validations)
+      .filter(([_, isValid]) => !isValid)
+      .map(([field]) => field);
+
+    if (failedValidations.length > 0) {
+      Alert.alert(
+        'Error de validación',
+        `Por favor corrija los siguientes campos:\n${failedValidations.join('\n')}`,
+        [{ text: 'OK' }]
+      );
       return;
     }
 
@@ -199,9 +238,15 @@ const CreateEventScreen = () => {
     }
 
     try {
-      // Formatear fechas para la API (formato ISO)
+      // Formatear fechas para la API manteniendo la zona horaria local
       const formatDateForAPI = (date: Date) => {
-        return date.toISOString().slice(0, 19).replace('T', ' ');
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
       };
 
       const eventData = {
@@ -221,13 +266,41 @@ const CreateEventScreen = () => {
       const newEvent = await createNewEvent(eventData);
 
       if (newEvent) {
+        // Función para restablecer el formulario
+        const resetForm = () => {
+          setName('');
+          setDescription('');
+          setAddress('');
+          setAllowedRadius('50');
+          setStartTime(new Date());
+          setEndTime(null);
+          setCoordinates({ latitude: null, longitude: null });
+          setErrors({
+            name: '',
+            description: '',
+            address: '',
+            allowedRadius: '',
+            startTime: '',
+            endTime: ''
+          });
+        };
+
         Alert.alert(
           'Evento Creado',
           'El evento ha sido creado exitosamente.',
           [
             {
+              text: 'Crear otro evento',
+              onPress: resetForm,
+              style: 'default'
+            },
+            {
               text: 'Ver Eventos',
-              onPress: () => router.replace('/(admin-app)/events')
+              onPress: () => {
+                resetForm(); // Reseteamos antes de navegar
+                router.replace('/(admin-app)/events');
+              },
+              style: 'default'
             }
           ]
         );
@@ -244,12 +317,12 @@ const CreateEventScreen = () => {
   // Verificar si el formulario es válido
   const isFormValid = () => {
     return name.trim() &&
-           allowedRadius.trim() &&
-           startTime !== null &&
-           endTime !== null &&
-           coordinates.latitude !== null &&
-           coordinates.longitude !== null &&
-           Object.values(errors).every(error => error === '');
+      allowedRadius.trim() &&
+      startTime !== null &&
+      endTime !== null &&
+      coordinates.latitude !== null &&
+      coordinates.longitude !== null &&
+      Object.values(errors).every(error => error === '');
   };
 
   // Funciones para manejar los selectores de fecha
@@ -276,6 +349,15 @@ const CreateEventScreen = () => {
   };
 
   const handleEndDateConfirm = (date: Date) => {
+    const now = new Date();
+    if (date < now) {
+      Alert.alert('Error', 'La fecha de fin no puede ser anterior a la fecha actual');
+      return;
+    }
+    if (startTime && date <= startTime) {
+      Alert.alert('Error', 'La fecha de fin debe ser posterior a la fecha de inicio');
+      return;
+    }
     setEndTime(date);
     validateField('endTime', date);
     hideEndDatePicker();
@@ -333,9 +415,8 @@ const CreateEventScreen = () => {
               Nombre del Evento *
             </Text>
             <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.name ? 'border-red-500' : 'border-gray-200'
-              }`}
+              className={`px-4 py-4 border rounded-lg text-base ${errors.name ? 'border-red-500' : 'border-gray-200'
+                }`}
               placeholder="Ej: Reunión de equipo, Conferencia..."
               placeholderTextColor="#9CA3AF"
               value={name}
@@ -359,9 +440,8 @@ const CreateEventScreen = () => {
               Descripción (Opcional)
             </Text>
             <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.description ? 'border-red-500' : 'border-gray-200'
-              }`}
+              className={`px-4 py-4 border rounded-lg text-base ${errors.description ? 'border-red-500' : 'border-gray-200'
+                }`}
               placeholder="Descripción del evento..."
               placeholderTextColor="#9CA3AF"
               value={description}
@@ -386,9 +466,8 @@ const CreateEventScreen = () => {
               Dirección (Opcional)
             </Text>
             <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.address ? 'border-red-500' : 'border-gray-200'
-              }`}
+              className={`px-4 py-4 border rounded-lg text-base ${errors.address ? 'border-red-500' : 'border-gray-200'
+                }`}
               placeholder="Dirección del evento..."
               placeholderTextColor="#9CA3AF"
               value={address}
@@ -412,9 +491,8 @@ const CreateEventScreen = () => {
               Radio Permitido (metros) *
             </Text>
             <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.allowedRadius ? 'border-red-500' : 'border-gray-200'
-              }`}
+              className={`px-4 py-4 border rounded-lg text-base ${errors.allowedRadius ? 'border-red-500' : 'border-gray-200'
+                }`}
               placeholder="50"
               placeholderTextColor="#9CA3AF"
               value={allowedRadius}
@@ -440,9 +518,8 @@ const CreateEventScreen = () => {
               Ubicación del Evento *
             </Text>
             <TouchableOpacity
-              className={`px-4 py-4 border rounded-lg flex-row items-center justify-between ${
-                coordinates.latitude ? 'border-green-500 bg-green-50' : 'border-gray-200'
-              }`}
+              className={`px-4 py-4 border rounded-lg flex-row items-center justify-between ${coordinates.latitude ? 'border-green-500 bg-green-50' : 'border-gray-200'
+                }`}
               onPress={getCurrentLocation}
               disabled={isGettingLocation || isLoading}
             >
@@ -479,16 +556,14 @@ const CreateEventScreen = () => {
             <Text className="text-gray-700 text-sm font-medium mb-2">
               Fecha y Hora de Inicio *
             </Text>
-            <TouchableOpacity
-              className={`px-4 py-4 border rounded-lg flex-row items-center justify-between ${
-                errors.startTime ? 'border-red-500' : 'border-gray-200'
-              }`}
+            {/* <TouchableOpacity
+              className={`px-4 py-4 border rounded-lg flex-row items-center justify-between ${errors.startTime ? 'border-red-500' : 'border-gray-200'
+                }`}
               onPress={showStartDatePicker}
               disabled={isLoading}
             >
-              <Text className={`text-base ${
-                startTime ? 'text-gray-800' : 'text-gray-400'
-              }`}>
+              <Text className={`text-base ${startTime ? 'text-gray-800' : 'text-gray-400'
+                }`}>
                 {startTime ? formatDateTime(startTime) : 'Seleccionar fecha y hora'}
               </Text>
               <Ionicons
@@ -502,7 +577,18 @@ const CreateEventScreen = () => {
             </Text>
             {errors.startTime ? (
               <Text className="text-red-500 text-xs mt-1">{errors.startTime}</Text>
-            ) : null}
+            ) : null} */}
+
+            <PureDateTimePicker
+              value={startTime}
+              onDateChange={(date: Date) => {
+                setStartTime(date);
+                validateField('startTime', date);
+              }}
+              mode="datetime"
+              minimumDate={new Date()}
+              placeholder="Seleccionar fecha y hora de inicio"
+            />
           </View>
 
           {/* Campo Fecha y Hora de Fin */}
@@ -510,24 +596,20 @@ const CreateEventScreen = () => {
             <Text className="text-gray-700 text-sm font-medium mb-2">
               Fecha y Hora de Fin *
             </Text>
-            <TouchableOpacity
-              className={`px-4 py-4 border rounded-lg flex-row items-center justify-between ${
-                errors.endTime ? 'border-red-500' : 'border-gray-200'
-              }`}
-              onPress={showEndDatePicker}
-              disabled={isLoading}
-            >
-              <Text className={`text-base ${
-                endTime ? 'text-gray-800' : 'text-gray-400'
-              }`}>
-                {endTime ? formatDateTime(endTime) : 'Seleccionar fecha y hora'}
-              </Text>
-              <Ionicons
-                name="calendar"
-                size={20}
-                color={endTime ? "#374151" : "#9CA3AF"}
-              />
-            </TouchableOpacity>
+            <PureDateTimePicker
+              value={endTime}
+              onDateChange={(date: Date) => {
+                if (startTime && date <= startTime) {
+                  Alert.alert('Error', 'La fecha de fin debe ser posterior a la fecha de inicio');
+                  return;
+                }
+                setEndTime(date);
+                validateField('endTime', date);
+              }}
+              mode="datetime"
+              minimumDate={startTime}
+              placeholder="Seleccionar fecha y hora de fin"
+            />
             <Text className="text-gray-400 text-xs mt-1">
               Debe ser posterior a la fecha de inicio
             </Text>
@@ -538,11 +620,10 @@ const CreateEventScreen = () => {
 
           {/* Botón de Crear Evento */}
           <TouchableOpacity
-            className={`py-4 rounded-lg mb-4 ${
-              isLoading || !isFormValid()
-                ? 'bg-gray-300'
-                : 'bg-blue-600'
-            }`}
+            className={`py-4 rounded-lg mb-4 ${isLoading || !isFormValid()
+              ? 'bg-gray-300'
+              : 'bg-blue-600'
+              }`}
             onPress={handleCreateEvent}
             disabled={isLoading || !isFormValid()}
           >
@@ -579,30 +660,35 @@ const CreateEventScreen = () => {
       </ScrollView>
 
       {/* Modal para seleccionar fecha de inicio */}
-      <DateTimePickerModal
+      {/* <DateTimePickerModal
         isVisible={isStartDatePickerVisible}
         mode="datetime"
         onConfirm={handleStartDateConfirm}
         onCancel={hideStartDatePicker}
+        date={startTime || new Date()}
         minimumDate={new Date()}
-        locale="es_ES"
-        headerTextIOS="Seleccionar fecha y hora de inicio"
+        locale="es-ES"
         confirmTextIOS="Confirmar"
         cancelTextIOS="Cancelar"
-      />
+        headerTextIOS="Seleccionar fecha y hora de inicio"
+        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+      /> */}
 
       {/* Modal para seleccionar fecha de fin */}
-      <DateTimePickerModal
+      {/* <DateTimePickerModal
         isVisible={isEndDatePickerVisible}
         mode="datetime"
         onConfirm={handleEndDateConfirm}
         onCancel={hideEndDatePicker}
+        date={endTime || startTime || new Date()}
         minimumDate={startTime || new Date()}
-        locale="es_ES"
-        headerTextIOS="Seleccionar fecha y hora de fin"
+        locale="es-ES"
         confirmTextIOS="Confirmar"
         cancelTextIOS="Cancelar"
-      />
+        headerTextIOS="Seleccionar fecha y hora de fin"
+        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+      /> */}
+
     </KeyboardAvoidingView>
   );
 };
