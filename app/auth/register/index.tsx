@@ -81,7 +81,7 @@ const RegisterScreen = () => {
 
   const validatePassword = (password: string) => {
     if (!password) return 'La contraseña es requerida';
-    if (password.length < 8) return 'La contraseña debe tener al menos 6 caracteres';
+    if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres';
     if (!/(?=.*[a-z])(?=.*[A-Z])/.test(password)) return 'Debe contener al menos una mayúscula y una minúscula';
     if (!/(?=.*\d)/.test(password)) return 'Debe contener al menos un número';
     return '';
