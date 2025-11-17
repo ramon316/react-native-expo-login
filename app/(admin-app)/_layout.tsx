@@ -2,7 +2,8 @@ import { appLogger as logger } from '@/helpers/logger/appLogger';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Redirect } from 'expo-router';
 import React, { useEffect } from 'react';
-import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { AuthCheckSkeleton } from '@/components/ui/SkeletonLoader';
 
 /* Drawer */
 import { Drawer } from 'expo-router/drawer';
@@ -45,11 +46,7 @@ const CheckAuthenticationLayout = () => {
 
 
   if (status === 'checking') {
-    return (
-      <View className='flex-1 justify-center items-center'>
-        <ActivityIndicator/>
-      </View>
-    )
+    return <AuthCheckSkeleton />;
   }
 
   if (status === 'unauthenticated') {

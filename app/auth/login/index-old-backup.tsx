@@ -1,0 +1,282 @@
+import { appLogger as logger } from '@/helpers/logger/appLogger';
+import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
+import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import { Ionicons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { useDebounce } from '@/hooks/useDebounce';
+
+const LoginScreen = () => {
+  // Referencias para el ScrollView
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
+  // Estados locales para el formulario
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Estados para errores de validación
+  const [errors, setErrors] = useState({
+    email: '',
+    password: ''
+  });
+
+  // Store de autenticación
+  const { login } = useAuthStore();
+
+  /*  Se posiciona en el 35% de la pantalla, ahí iniciamos*/
+  // Optimización: useMemo para evitar recalcular en cada render
+  const height = useMemo(() => Dimensions.get('window').height, []);
+
+  // Funciones de validación
+  const validateEmail = (email: string) => {
+    if (!email.trim()) return 'El email es requerido';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return 'Ingrese un email válido';
+    return '';
+  };
+
+  const validatePassword = (password: string) => {
+    if (!password) return 'La contraseña es requerida';
+    if (password.length < 3) return 'La contraseña debe tener al menos 3 caracteres';
+    return '';
+  };
+
+  // Validar campo individual (optimizado con useCallback)
+  const validateField = useCallback((field: string, value: string) => {
+    let error = '';
+    switch (field) {
+      case 'email':
+        error = validateEmail(value);
+        break;
+      case 'password':
+        error = validatePassword(value);
+        break;
+    }
+
+    setErrors(prev => ({ ...prev, [field]: error }));
+    return error === '';
+  }, []); // No tiene dependencias, las funciones de validación son estables
+
+  // Validar todo el formulario
+  const validateForm = () => {
+    const emailValid = validateField('email', email);
+    const passwordValid = validateField('password', password);
+    return emailValid && passwordValid;
+  };
+
+  // Función para manejar el login (optimizado con useCallback)
+  const handleLogin = useCallback(async () => {
+    if (!validateForm()) {
+      Alert.alert('Error', 'Por favor corrija los errores en el formulario');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const success = await login(email.trim().toLowerCase(), password);
+
+      if (success) {
+        // Obtener el usuario del store después del login exitoso
+        const { user } = useAuthStore.getState();
+
+        // Redireccionar basado en el rol del usuario usando el helper
+        redirectBasedOnRole(user);
+      } else {
+        Alert.alert('Error', 'Email o contraseña incorrectos');
+        // Limpiar contraseña en caso de error
+        setPassword('');
+        setErrors(prev => ({ ...prev, password: '' }));
+      }
+    } catch (error) {
+      logger.error('❌ Error en handleLogin:', error);
+      Alert.alert('Error', 'Ocurrió un error al iniciar sesión');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email, password, login]); // Dependencias necesarias
+
+  // Debouncing para validaciones automáticas (optimización)
+  const debouncedEmail = useDebounce(email, 400);
+  const debouncedPassword = useDebounce(password, 400);
+
+  // Efecto para validar email cuando deja de escribir
+  useEffect(() => {
+    if (debouncedEmail && errors.email) {
+      validateField('email', debouncedEmail);
+    }
+  }, [debouncedEmail, errors.email, validateField]);
+
+  // Efecto para validar password cuando deja de escribir
+  useEffect(() => {
+    if (debouncedPassword && errors.password) {
+      validateField('password', debouncedPassword);
+    }
+  }, [debouncedPassword, errors.password, validateField]);
+
+  // Verificar si el formulario es válido (optimizado con useMemo)
+  const isFormValid = useMemo(() => {
+    return email.trim() !== '' &&
+           password !== '' &&
+           Object.values(errors).every(error => error === '');
+  }, [email, password, errors]);
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      className="flex-1"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <ScrollView
+        ref={scrollViewRef}
+        className="flex-1 bg-white"
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        nestedScrollEnabled={true}
+      >
+        {/* Espacio superior - 35% de la pantalla */}
+        <View style={{ height: height * 0.35 }} className="justify-end pb-8">
+          {/* Textos de bienvenida */}
+          <View className="px-6">
+            <Text className="text-4xl font-bold text-rose-800 mb-2">
+              Bienvenido
+            </Text>
+            {/* <Text className="text-3xl font-bold text-blue-600 mb-4">
+              Ingresar
+            </Text> */}
+            <Text className="text-gray-500 text-base">
+              Por favor ingrese sus credenciales para continuar
+            </Text>
+          </View>
+        </View>
+
+        {/* Formulario - 65% restante */}
+        <View className="flex-1 px-6 pt-8">
+          {/* Campo Email */}
+          <View className="mb-4">
+            <Text className="text-gray-700 text-sm font-medium mb-2">
+              Email
+            </Text>
+            <TextInput
+              className={`px-4 py-4 border rounded-lg text-base ${
+                errors.email ? 'border-red-500' : 'border-gray-200'
+              }`}
+              placeholder="Ingrese su email"
+              placeholderTextColor="#9CA3AF"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (errors.email) validateField('email', text);
+              }}
+              onBlur={() => validateField('email', email)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isLoading}
+            />
+            {errors.email ? (
+              <Text className="text-red-500 text-xs mt-1">{errors.email}</Text>
+            ) : null}
+          </View>
+
+          {/* Campo Contraseña */}
+          <View className="mb-6">
+            <Text className="text-gray-700 text-sm font-medium mb-2">
+              Contraseña
+            </Text>
+            <View className="relative">
+              <TextInput
+                className={`px-4 py-4 pr-12 border rounded-lg text-base ${
+                  errors.password ? 'border-red-500' : 'border-gray-200'
+                }`}
+                placeholder="Ingrese su contraseña"
+                placeholderTextColor="#9CA3AF"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (errors.password) validateField('password', text);
+                }}
+                onBlur={() => validateField('password', password)}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                className="absolute right-3 top-4"
+                onPress={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="#6B7280"
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.password ? (
+              <Text className="text-red-500 text-xs mt-1">{errors.password}</Text>
+            ) : null}
+          </View>
+
+          {/* Botón de Login */}
+          <TouchableOpacity
+            className={`py-4 rounded-lg mb-4 ${
+              isLoading || !isFormValid
+                ? 'bg-gray-300'
+                : 'bg-blue-600'
+            }`}
+            onPress={handleLogin}
+            disabled={isLoading || !isFormValid}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-white text-center text-lg font-semibold">
+                Iniciar Sesión
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Link a registro */}
+          <View className="items-center flex-row justify-center mt-4">
+            <Text className="text-gray-500 text-sm mr-2">
+              ¿No tienes cuenta?
+            </Text>
+            <Link href="/auth/register" className="text-blue-600 text-sm font-medium">
+              Crear cuenta
+            </Link>
+          </View>
+
+          {/* Texto de ayuda */}
+          <View className="items-center mt-6">
+            <Text className="text-gray-400 text-xs text-center">
+              ¿Problemas para ingresar?
+            </Text>
+            <Link className='text-blue-600 text-xs text-center' href="mailto:nexusolutionsmg@gmail.com?subject=Problema%20de%20ingreso">Contacte al administrador</Link>
+            <Text className="text-gray-400 text-xs text-center">
+              Asistencias Sección VIII Versión 1.0.0 © 2025
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+};
+
+export default LoginScreen;

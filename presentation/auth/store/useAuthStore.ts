@@ -21,23 +21,25 @@ export interface AuthState {
     checkAuthStatus: () => Promise<void>;
 }
 
+/**
+ * Helper function para adaptar usuario (optimización: fuera del store)
+ * Esto evita que se recree en cada instancia del store
+ */
+const adaptUser = (user: User): User => {
+    return {
+        ...user,
+        // Campos calculados para compatibilidad
+        fullName: user.name,
+        isActive: isUserActive(user),
+        roles: [user.role]
+    } as User;
+};
+
 export const useAuthStore = create<AuthState>()((set, get) => ({
     /* Properties */
     status: 'checking',
     token: undefined,
     user: undefined,
-
-    /* Helper function para adaptar usuario */
-    adaptUser: (user: User): User => {
-        // Agregar campos de compatibilidad
-        return {
-            ...user,
-            // Campos calculados para compatibilidad
-            fullName: user.name,
-            isActive: isUserActive(user),
-            roles: [user.role]
-        } as User;
-    },
 
     /* Methods  o actions in Zuztand */
     changeStatus: async (token?:string, user?:User, origin?: string) =>{
@@ -56,8 +58,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         logger.log(`✅ changeStatus (${origin}): Autenticación exitosa`);
         /* Si tenemos respuesta, si se autentico */
 
-        // Adaptar usuario para compatibilidad
-        const adaptedUser = get().adaptUser(user);
+        // Adaptar usuario para compatibilidad (usando función externa optimizada)
+        const adaptedUser = adaptUser(user);
 
         set({
             status: 'authenticated',

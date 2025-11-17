@@ -4,20 +4,21 @@ import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo, useCallback } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
-  useWindowDimensions,
   View
 } from 'react-native';
 import CustomCheckbox from './components/CustomCheckbox';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { FormInput } from '@/components/ui/FormInput';
 
 const RegisterScreen = () => {
   // Referencias para el ScrollView y campos
@@ -55,7 +56,8 @@ const RegisterScreen = () => {
   });
 
   /*  Se posiciona en el 20% de la pantalla para más espacio al formulario*/
-  const { height } = useWindowDimensions();
+  // Optimización: useMemo para evitar recalcular en cada render
+  const height = useMemo(() => Dimensions.get('window').height, []);
 
   // Funciones de validación
   const validateFullName = (name: string) => {
@@ -93,8 +95,8 @@ const RegisterScreen = () => {
     return '';
   };
 
-  // Validar campo individual
-  const validateField = (field: string, value: string) => {
+  // Validar campo individual (optimizado con useCallback)
+  const validateField = useCallback((field: string, value: string) => {
     let error = '';
     switch (field) {
       case 'name':
@@ -116,7 +118,7 @@ const RegisterScreen = () => {
 
     setErrors(prev => ({ ...prev, [field]: error }));
     return error === '';
-  };
+  }, [password]); // password es necesario para validar confirmPassword
 
   // Validar todo el formulario
   const validateForm = () => {
@@ -213,8 +215,8 @@ const RegisterScreen = () => {
     }
   };
 
-  // Función para validar matrícula
-  const handleValidateMatricula = async (matricula: string) => {
+  // Función para validar matrícula (optimizado con useCallback)
+  const handleValidateMatricula = useCallback(async (matricula: string) => {
     if (!matricula.trim()) return;
 
     setIsValidatingMatricula(true);
@@ -250,10 +252,10 @@ const RegisterScreen = () => {
     } finally {
       setIsValidatingMatricula(false);
     }
-  };
+  }, []); // No tiene dependencias externas
 
-  // Función para manejar la confirmación de matrícula no encontrada
-  const handleMatriculaConfirmation = (isCorrect: boolean) => {
+  // Función para manejar la confirmación de matrícula no encontrada (optimizado con useCallback)
+  const handleMatriculaConfirmation = useCallback((isCorrect: boolean) => {
     if (isCorrect) {
       // El usuario confirma que la matrícula es correcta
       setMatriculaValidated(true);
@@ -270,20 +272,58 @@ const RegisterScreen = () => {
         [{ text: 'Entendido' }]
       );
     }
-  };
+  }, []); // No tiene dependencias externas
 
-  // Verificar si el formulario es válido
-  const isFormValid = () => {
-    return name.trim() &&
-      employeeId.trim() &&
-      email.trim() &&
-      password &&
-      confirmPassword &&
+  // Debouncing para validaciones automáticas (optimización)
+  const debouncedName = useDebounce(name, 400);
+  const debouncedEmployeeId = useDebounce(employeeId, 400);
+  const debouncedEmail = useDebounce(email, 400);
+  const debouncedPassword = useDebounce(password, 400);
+  const debouncedConfirmPassword = useDebounce(confirmPassword, 400);
+
+  // Efectos para validar cuando el usuario deja de escribir
+  useEffect(() => {
+    if (debouncedName && errors.name) {
+      validateField('name', debouncedName);
+    }
+  }, [debouncedName, errors.name, validateField]);
+
+  useEffect(() => {
+    if (debouncedEmployeeId && errors.employeeId) {
+      validateField('employeeId', debouncedEmployeeId);
+    }
+  }, [debouncedEmployeeId, errors.employeeId, validateField]);
+
+  useEffect(() => {
+    if (debouncedEmail && errors.email) {
+      validateField('email', debouncedEmail);
+    }
+  }, [debouncedEmail, errors.email, validateField]);
+
+  useEffect(() => {
+    if (debouncedPassword && errors.password) {
+      validateField('password', debouncedPassword);
+    }
+  }, [debouncedPassword, errors.password, validateField]);
+
+  useEffect(() => {
+    if (debouncedConfirmPassword && errors.confirmPassword) {
+      validateField('confirmPassword', debouncedConfirmPassword);
+    }
+  }, [debouncedConfirmPassword, errors.confirmPassword, validateField]);
+
+  // Verificar si el formulario es válido (optimizado con useMemo)
+  const isFormValid = useMemo(() => {
+    return name.trim() !== '' &&
+      employeeId.trim() !== '' &&
+      email.trim() !== '' &&
+      password !== '' &&
+      confirmPassword !== '' &&
       matriculaValidated === true && // Matrícula debe estar validada
       acceptedPrivacy && // Debe aceptar aviso de privacidad
       acceptedLocation && // Debe autorizar uso de ubicación
       Object.values(errors).every(error => error === '');
-  };
+  }, [name, employeeId, email, password, confirmPassword, matriculaValidated, acceptedPrivacy, acceptedLocation, errors]);
 
   return (
     <KeyboardAvoidingView
@@ -545,12 +585,12 @@ const RegisterScreen = () => {
 
           {/* Botón de Registro */}
           <TouchableOpacity
-            className={`py-4 rounded-lg mb-4 ${isLoading || !isFormValid()
+            className={`py-4 rounded-lg mb-4 ${isLoading || !isFormValid
                 ? 'bg-gray-300'
                 : 'bg-blue-600'
               }`}
             onPress={handleRegister}
-            disabled={isLoading || !isFormValid()}
+            disabled={isLoading || !isFormValid}
           >
             {isLoading ? (
               <ActivityIndicator color="white" />
@@ -562,7 +602,7 @@ const RegisterScreen = () => {
           </TouchableOpacity>
 
           {/* Mensaje informativo cuando el formulario no es válido */}
-          {!isFormValid() && !isLoading && (
+          {!isFormValid && !isLoading && (
             <View className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
               <Text className="text-gray-600 text-sm text-center mb-2">
                 Para continuar, completa lo siguiente:

@@ -1,91 +1,70 @@
 import { appLogger as logger } from '@/helpers/logger/appLogger';
 import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
-  useWindowDimensions,
   View
 } from 'react-native';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { FormInput } from '@/components/ui/FormInput';
 
 const LoginScreen = () => {
   // Referencias para el ScrollView
   const scrollViewRef = React.useRef<ScrollView>(null);
 
-  // Estados locales para el formulario
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Estado de carga
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Estados para errores de validación
-  const [errors, setErrors] = useState({
-    email: '',
-    password: ''
-  });
 
   // Store de autenticación
   const { login } = useAuthStore();
 
   /*  Se posiciona en el 35% de la pantalla, ahí iniciamos*/
-  const { height } = useWindowDimensions();
+  // Optimización: useMemo para evitar recalcular en cada render
+  const height = useMemo(() => Dimensions.get('window').height, []);
 
-  // Funciones de validación
-  const validateEmail = (email: string) => {
-    if (!email.trim()) return 'El email es requerido';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return 'Ingrese un email válido';
-    return '';
-  };
-
-  const validatePassword = (password: string) => {
-    if (!password) return 'La contraseña es requerida';
-    if (password.length < 3) return 'La contraseña debe tener al menos 3 caracteres';
-    return '';
-  };
-
-  // Validar campo individual
-  const validateField = (field: string, value: string) => {
-    let error = '';
-    switch (field) {
-      case 'email':
-        error = validateEmail(value);
-        break;
-      case 'password':
-        error = validatePassword(value);
-        break;
+  // Reglas de validación
+  const validationRules = {
+    email: (value: string) => {
+      if (!value.trim()) return 'El email es requerido';
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) return 'Ingrese un email válido';
+      return '';
+    },
+    password: (value: string) => {
+      if (!value) return 'La contraseña es requerida';
+      if (value.length < 3) return 'La contraseña debe tener al menos 3 caracteres';
+      return '';
     }
-
-    setErrors(prev => ({ ...prev, [field]: error }));
-    return error === '';
   };
 
-  // Validar todo el formulario
-  const validateForm = () => {
-    const emailValid = validateField('email', email);
-    const passwordValid = validateField('password', password);
-    return emailValid && passwordValid;
-  };
+  // Hook de validación de formulario (optimizado con debouncing)
+  const {
+    values,
+    errors,
+    handleChange,
+    handleBlur,
+    isValid,
+    setFieldValue
+  } = useFormValidation(
+    { email: '', password: '' },
+    validationRules,
+    { validateOnChange: true, validateOnBlur: true }
+  );
 
-  // Función para manejar el login
-  const handleLogin = async () => {
-    if (!validateForm()) {
-      Alert.alert('Error', 'Por favor corrija los errores en el formulario');
-      return;
-    }
-
+  // Función para manejar el login (optimizado con useCallback)
+  const handleLogin = useCallback(async () => {
     setIsLoading(true);
     try {
-      const success = await login(email.trim().toLowerCase(), password);
+      const success = await login(values.email.trim().toLowerCase(), values.password);
 
       if (success) {
         // Obtener el usuario del store después del login exitoso
@@ -96,8 +75,7 @@ const LoginScreen = () => {
       } else {
         Alert.alert('Error', 'Email o contraseña incorrectos');
         // Limpiar contraseña en caso de error
-        setPassword('');
-        setErrors(prev => ({ ...prev, password: '' }));
+        setFieldValue('password', '');
       }
     } catch (error) {
       logger.error('❌ Error en handleLogin:', error);
@@ -105,14 +83,7 @@ const LoginScreen = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Verificar si el formulario es válido
-  const isFormValid = () => {
-    return email.trim() &&
-           password &&
-           Object.values(errors).every(error => error === '');
-  };
+  }, [values.email, values.password, login, setFieldValue]);
 
   return (
     <KeyboardAvoidingView
@@ -136,9 +107,6 @@ const LoginScreen = () => {
             <Text className="text-4xl font-bold text-rose-800 mb-2">
               Bienvenido
             </Text>
-            {/* <Text className="text-3xl font-bold text-blue-600 mb-4">
-              Ingresar
-            </Text> */}
             <Text className="text-gray-500 text-base">
               Por favor ingrese sus credenciales para continuar
             </Text>
@@ -147,82 +115,43 @@ const LoginScreen = () => {
 
         {/* Formulario - 65% restante */}
         <View className="flex-1 px-6 pt-8">
-          {/* Campo Email */}
-          <View className="mb-4">
-            <Text className="text-gray-700 text-sm font-medium mb-2">
-              Email
-            </Text>
-            <TextInput
-              className={`px-4 py-4 border rounded-lg text-base ${
-                errors.email ? 'border-red-500' : 'border-gray-200'
-              }`}
-              placeholder="Ingrese su email"
-              placeholderTextColor="#9CA3AF"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                if (errors.email) validateField('email', text);
-              }}
-              onBlur={() => validateField('email', email)}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
-            {errors.email ? (
-              <Text className="text-red-500 text-xs mt-1">{errors.email}</Text>
-            ) : null}
-          </View>
+          {/* Campo Email - Usando componente reutilizable */}
+          <FormInput
+            label="Email"
+            placeholder="Ingrese su email"
+            value={values.email}
+            onChangeText={handleChange('email')}
+            onBlur={handleBlur('email')}
+            error={errors.email}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!isLoading}
+          />
 
-          {/* Campo Contraseña */}
-          <View className="mb-6">
-            <Text className="text-gray-700 text-sm font-medium mb-2">
-              Contraseña
-            </Text>
-            <View className="relative">
-              <TextInput
-                className={`px-4 py-4 pr-12 border rounded-lg text-base ${
-                  errors.password ? 'border-red-500' : 'border-gray-200'
-                }`}
-                placeholder="Ingrese su contraseña"
-                placeholderTextColor="#9CA3AF"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (errors.password) validateField('password', text);
-                }}
-                onBlur={() => validateField('password', password)}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                className="absolute right-3 top-4"
-                onPress={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={20}
-                  color="#6B7280"
-                />
-              </TouchableOpacity>
-            </View>
-            {errors.password ? (
-              <Text className="text-red-500 text-xs mt-1">{errors.password}</Text>
-            ) : null}
-          </View>
+          {/* Campo Contraseña - Usando componente reutilizable */}
+          <FormInput
+            label="Contraseña"
+            placeholder="Ingrese su contraseña"
+            value={values.password}
+            onChangeText={handleChange('password')}
+            onBlur={handleBlur('password')}
+            error={errors.password}
+            isPassword
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!isLoading}
+          />
 
           {/* Botón de Login */}
           <TouchableOpacity
             className={`py-4 rounded-lg mb-4 ${
-              isLoading || !isFormValid()
+              isLoading || !isValid
                 ? 'bg-gray-300'
                 : 'bg-blue-600'
             }`}
             onPress={handleLogin}
-            disabled={isLoading || !isFormValid()}
+            disabled={isLoading || !isValid}
           >
             {isLoading ? (
               <ActivityIndicator color="white" />
