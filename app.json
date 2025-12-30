@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "quickcheck2",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -19,17 +19,14 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff",
-        "permissions": [
-        "INTERNET",
-        "ACCESS_NETWORK_STATE",
-        "com.google.android.gms.permission.AD_ID"
-        ],
-        "usesCleartextTraffic": true
+        "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "com.google.android.gms.permission.AD_ID"
       ],
       "package": "com.rmarquez316.quickcheck2"
     },

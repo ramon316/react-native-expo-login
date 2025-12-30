@@ -4,7 +4,7 @@ import { redirectBasedOnRole } from '@/helpers/navigation/roleBasedRedirect';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
-import React, { useRef, useState, useMemo, useCallback } from 'react';
+import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,12 +13,30 @@ import {
   Platform,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
 import CustomCheckbox from './components/CustomCheckbox';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { FormInput } from '@/components/ui/FormInput';
+
+// Hook personalizado para debouncing
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 const RegisterScreen = () => {
   // Referencias para el ScrollView y campos
@@ -564,8 +582,10 @@ const RegisterScreen = () => {
                   description="Es necesario aceptar para continuar con el registro"
                   required={true}
                 />
-                <Link href="https://seccion8.org/privacy" className="text-blue-600 text-xs text-left ml-8">
-                  Leer aviso de privacidad
+                <Link href="https://seccion8.org/privacy" asChild>
+                  <Text className="text-blue-600 text-xs text-left ml-8">
+                    Leer aviso de privacidad
+                  </Text>
                 </Link>
               </View>
 
@@ -642,8 +662,10 @@ const RegisterScreen = () => {
             <Text className="text-gray-500 text-sm mr-2">
               ¿Ya tienes una cuenta?
             </Text>
-            <Link href="/auth/login" className="text-blue-600 text-sm font-medium">
-              Iniciar sesión
+            <Link href="/auth/login" asChild>
+              <Text className="text-blue-600 text-sm font-medium">
+                Iniciar sesión
+              </Text>
             </Link>
           </View>
 
@@ -652,7 +674,9 @@ const RegisterScreen = () => {
             <Text className="text-gray-400 text-xs text-center">
               ¿Problemas para ingresar?
             </Text>
-            <Link className='text-blue-600 text-xs text-center' href="mailto:nexusolutionsmg@gmail.com?subject=Problema%20de%20ingreso">Contacte al administrador</Link>
+            <Link href="mailto:nexusolutionsmg@gmail.com?subject=Problema%20de%20ingreso" asChild>
+              <Text className='text-blue-600 text-xs text-center'>Contacte al administrador</Text>
+            </Link>
             <Text className="text-gray-400 text-xs text-center">
               Asistencias Sección VIII Versión 1.0.0 © 2025
             </Text>

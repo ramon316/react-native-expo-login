@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { FormInput } from '@/components/ui/FormInput';
+import * as WebBrowser from 'expo-web-browser';
 
 const LoginScreen = () => {
   // Referencias para el ScrollView
@@ -84,6 +85,19 @@ const LoginScreen = () => {
       setIsLoading(false);
     }
   }, [values.email, values.password, login, setFieldValue]);
+
+  // Función para abrir el navegador con la página de recuperación de contraseña
+  const handleForgotPassword = useCallback(async () => {
+    try {
+      await WebBrowser.openBrowserAsync('https://seccion8.org/forgot-password', {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+        controlsColor: '#3B82F6', // Color azul consistente con el diseño
+      });
+    } catch (error) {
+      logger.error('❌ Error al abrir navegador:', error);
+      Alert.alert('Error', 'No se pudo abrir el navegador');
+    }
+  }, []);
 
   return (
     <KeyboardAvoidingView
@@ -162,13 +176,24 @@ const LoginScreen = () => {
             )}
           </TouchableOpacity>
 
+          {/* Link para recuperar contraseña */}
+          <View className="items-center mb-4">
+            <TouchableOpacity onPress={handleForgotPassword} disabled={isLoading}>
+              <Text className="text-blue-600 text-sm font-medium">
+                ¿Olvidaste tu contraseña?
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Link a registro */}
           <View className="items-center flex-row justify-center mt-4">
             <Text className="text-gray-500 text-sm mr-2">
               ¿No tienes cuenta?
             </Text>
-            <Link href="/auth/register" className="text-blue-600 text-sm font-medium">
-              Crear cuenta
+            <Link href="/auth/register" asChild>
+              <Text className="text-blue-600 text-sm font-medium">
+                Crear cuenta
+              </Text>
             </Link>
           </View>
 
@@ -177,7 +202,9 @@ const LoginScreen = () => {
             <Text className="text-gray-400 text-xs text-center">
               ¿Problemas para ingresar?
             </Text>
-            <Link className='text-blue-600 text-xs text-center' href="mailto:nexusolutionsmg@gmail.com?subject=Problema%20de%20ingreso">Contacte al administrador</Link>
+            <Link href="mailto:nexusolutionsmg@gmail.com?subject=Problema%20de%20ingreso" asChild>
+              <Text className='text-blue-600 text-xs text-center'>Contacte al administrador</Text>
+            </Link>
             <Text className="text-gray-400 text-xs text-center">
               Asistencias Sección VIII Versión 1.0.0 © 2025
             </Text>

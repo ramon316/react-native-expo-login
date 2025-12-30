@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(npm --version:*)",
+      "Bash(npm outdated:*)",
+      "Bash(npx expo-doctor)",
+      "Bash(npm install)",
+      "Bash(npm update:*)",
+      "Bash(nvm --version:*)",
+      "Bash(npx expo start:*)",
+      "Bash(npm install:*)",
+      "Bash(java -version:*)",
+      "Bash(javac:*)"
+    ]
+  }
+}
